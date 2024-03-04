@@ -24,6 +24,6 @@ void main()
 {
 	for (int i = 0; i < maxIndex; ++i)
 	{
-		outBuffer.data[i].color += vec4(0, 0, 255, 0) * delta;
+		outBuffer.data[i].color = vec4(0, 0, 255, 0) * delta;
 	}
 }

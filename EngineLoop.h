@@ -1,7 +1,6 @@
 #pragma once
-#include <memory>
 #include <SDL.h>
-#include "ComputeShader.h"
+#include "Camera.h"
 #undef main
 
 enum class ProcessState
@@ -9,8 +8,6 @@ enum class ProcessState
 	NOT_OKAY = -1,
 	OKAY = 0
 };
-
-const unsigned int SCREEN_WIDTH = 640, SCREEN_HEIGHT = 480;
 
 class EngineLoop
 {
@@ -41,9 +38,6 @@ private:
 
 	GLFWwindow* m_OpenGLWindow = nullptr;
 
-	std::unique_ptr<ComputeShader> m_ComputeShader = nullptr;
-
-	GLuint m_pixelBuffer = 0;
-	glm::vec4 m_pixelData[SCREEN_WIDTH * SCREEN_HEIGHT];
+	std::unique_ptr<Camera> m_Camera = nullptr;
 };
 

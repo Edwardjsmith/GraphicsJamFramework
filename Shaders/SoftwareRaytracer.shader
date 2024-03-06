@@ -17,14 +17,13 @@ vec3 CastRay(in Ray ray, float scalar) { return ray.Origin + (scalar * ray.Direc
 struct PixelData
 {
 	vec4 color;
+	//vec2 coords;
 };
 
 layout(binding = 0) buffer block
 {
 	PixelData data[];
 } outBuffer;
-
-layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
 
 uniform float delta;
 
@@ -33,14 +32,10 @@ uniform vec3 cameraLowerLeft;
 uniform vec3 cameraRight;
 uniform vec3 cameraUp;
 
-int screenWidth = 640;
-int screenHeight = 480;
+uniform int screenWidth = 640;
+uniform int screenHeight = 480;
 
-vec3 viewPortU = vec3(screenWidth, 0, 0);
-vec3 viewPortV = vec3(0, -screenHeight, 0);
-
-vec3 pixelU = viewPortU / screenWidth;
-vec3 pixelV = viewPortV / screenHeight;
+vec3 screenCentre = vec3(screenWidth * 0.5, screenHeight * 0.5, 0);
 
 Ray GetRay(in vec3 pos, in vec3 direction)
 {
@@ -64,33 +59,30 @@ bool SphereHit(in vec3 pos, float radius, in Ray ray)
 	return discriminant >= 0;
 }
 
-vec3 GetRayColor(in Ray ray)
+vec3 GetRayColor(in Ray ray, uint x, uint y)
 {
-	if (SphereHit(vec3(0, 0, -1), 0.5, ray))
+	//if (SphereHit(vec3(0, 0, 1), 10, ray))
 	{
-		return vec3(1, 0, 0);
+		//return vec3(1, 0, 0);
 	}
 
-	vec3 normalizedDir = normalize(ray.Direction);
-	float scalar = 0.5 * (normalizedDir.x + 1.0);
+	float colourX = (x / (screenWidth * 2.0f)) * 255.0f;
+	float colourY = (y / (screenHeight * 2.0f)) * 255.0f;
 
-	return (1.0 - scalar) * vec3(1) + scalar * vec3(0.5, 0.7, 1.0);
+	return vec3(colourX, colourY, 0);
+
 }   
 
+layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
 void main()
 {
-	for (int i = 0; i < screenHeight; ++i)
-	{
-		for (int j = 0; j < screenWidth; ++j)
-		{
-			vec3 viewPortLeft = cameraPos - ((viewPortU * 0.5) - (viewPortV * 0.5));
-			vec3 topLeftPixelLoc = viewPortLeft + 0.5 * (pixelU + pixelV);
-			vec3 pixelCentre = topLeftPixelLoc + (i * pixelV) + (j * pixelU);
+	uint indexX = (gl_WorkGroupID.x * gl_WorkGroupSize.x) + gl_LocalInvocationID.x;
+	uint indexY = (gl_WorkGroupID.y * gl_WorkGroupSize.y) + gl_LocalInvocationID.y;
 
-			vec3 rayDir = pixelCentre - cameraPos;
-			Ray ray = GetRay(cameraPos, rayDir);
+	vec3 pixelCentre = vec3(indexX, indexY, 0);
 
-			outBuffer.data[(screenWidth * i) + j].color = vec4(GetRayColor(ray), 0) * 255;
-		}
-	}
+	vec3 rayDir = screenCentre - pixelCentre;
+	Ray ray = GetRay(screenCentre, rayDir);
+
+	outBuffer.data[indexX + (indexY * screenWidth)].color = vec4(GetRayColor(ray, indexX, indexY), 1.0f);
 }

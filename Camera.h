@@ -6,6 +6,12 @@
 const unsigned int SCREEN_WIDTH = 640;
 const unsigned int SCREEN_HEIGHT = 480;
 
+struct PixelData
+{
+	glm::vec4 color;
+	//glm::vec2 coords;
+};
+
 class Camera
 {
 public:
@@ -52,7 +58,7 @@ private:
 
 	std::unique_ptr<ComputeShader> m_ComputeShader = nullptr;
 
-	glm::vec4 m_PixelData[SCREEN_WIDTH * SCREEN_HEIGHT];
+	PixelData m_PixelData[SCREEN_WIDTH * SCREEN_HEIGHT];
 
 	GLuint m_pixelBuffer = 0;
 };

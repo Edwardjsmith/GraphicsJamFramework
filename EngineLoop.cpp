@@ -35,17 +35,20 @@ ProcessState EngineLoop::Draw()
 
         void* const pixelData = m_Camera->GetPixelData();
 
-        for (int i = 0; i < SCREEN_HEIGHT; ++i)
+        for (int i = 0; i < SCREEN_WIDTH; ++i)
         {
-            for (int j = 0; j < SCREEN_WIDTH; ++j)
+            for (int j = 0; j < SCREEN_HEIGHT; ++j)
             {
-                glm::vec4& col = static_cast<glm::vec4*>(pixelData)[(SCREEN_WIDTH * i) + j];
+                PixelData& data = static_cast<PixelData*>(pixelData)[i + (j * SCREEN_WIDTH)];
 
-                const float r = col.r;
-                const float g = col.g;
-                const float b = col.b;
+                const float r = data.color.r;
+                const float g = data.color.g;
+                const float b = data.color.b;
 
-                pixels[(SCREEN_WIDTH * i) + j] = SDL_MapRGB(m_mainSurface->format, r, g, b);
+                //const float coordX = data.coords.x;
+                //const float coordY = data.coords.y;
+
+                pixels[i + (j * SCREEN_WIDTH)] = SDL_MapRGB(m_mainSurface->format, r, g, b);
             }
         }
 

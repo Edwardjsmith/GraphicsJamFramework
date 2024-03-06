@@ -47,12 +47,16 @@ void Camera::Draw(float delta)
 		//m_ComputeShader->SetVec3("cameraLowerLeft", GetCameraLowerLeft());
 		//m_ComputeShader->SetVec3("cameraRight", m_right);
 		//m_ComputeShader->SetVec3("cameraUp", m_up);
-		m_ComputeShader->SetVec3("cameraPos", m_position);
+		//m_ComputeShader->SetVec3("cameraPos", m_position);
+		m_ComputeShader->SetInt("screenWidth", SCREEN_WIDTH);
+		m_ComputeShader->SetInt("screenHeight", SCREEN_HEIGHT);
+
+		//glm::uvec2 dims= { SCREEN_WIDTH , SCREEN_HEIGHT }
 
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, m_pixelBuffer);
-		glDispatchCompute(1, 1, 1);
+		glDispatchCompute(SCREEN_WIDTH / 8, SCREEN_HEIGHT / 8, 1);
 		glMemoryBarrier(GL_ALL_BARRIER_BITS);
-		glGetBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, (SCREEN_WIDTH * SCREEN_HEIGHT) * sizeof(glm::vec4), (GLvoid*)m_PixelData);
+		glGetBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, (SCREEN_WIDTH * SCREEN_HEIGHT) * sizeof(PixelData), (GLvoid*)m_PixelData);
 	}
 }
 
@@ -117,7 +121,7 @@ void Camera::InitShader(const char* path)
 
 	glGenBuffers(1, &m_pixelBuffer);
 	glBindBuffer(GL_ARRAY_BUFFER, m_pixelBuffer);
-	glBufferData(GL_ARRAY_BUFFER, (SCREEN_WIDTH * SCREEN_HEIGHT) * sizeof(glm::vec4), 0, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, (SCREEN_WIDTH * SCREEN_HEIGHT) * sizeof(PixelData), 0, GL_STATIC_DRAW);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 

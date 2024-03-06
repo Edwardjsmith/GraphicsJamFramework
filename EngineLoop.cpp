@@ -2,12 +2,7 @@
 
 ProcessState EngineLoop::Init()
 {
-    if (SDLInit() != ProcessState::OKAY)
-    {
-        return ProcessState::NOT_OKAY;
-    }
-
-    if (OpenGLInit("Shaders/SoftwareRaytracer.shader") != ProcessState::OKAY)
+    if (SDLInit("Shaders/SoftwareRaytracer.shader") != ProcessState::OKAY)
     {
         return ProcessState::NOT_OKAY;
     }
@@ -25,7 +20,7 @@ ProcessState EngineLoop::Draw()
         return ProcessState::NOT_OKAY;
     }
 
-    m_Camera->Draw((float)glfwGetTime());
+    m_Camera->Draw((float)0);
 
     if (m_SDLWindow && m_mainSurface)
     {
@@ -75,7 +70,6 @@ ProcessState EngineLoop::Update()
 void EngineLoop::Cleanup()
 {
     SDLCleanup();
-    OpenGLCleanup();
 }
 
 bool EngineLoop::ShutdownPending() const
@@ -83,7 +77,7 @@ bool EngineLoop::ShutdownPending() const
     return SDLEvent.type == SDL_QUIT;
 }
 
-ProcessState EngineLoop::SDLInit()
+ProcessState EngineLoop::SDLInit(const char* computePath)
 {
     if (SDL_Init(SDL_INIT_VIDEO) < 0)
     {
@@ -92,7 +86,7 @@ ProcessState EngineLoop::SDLInit()
     }
     else
     {
-        m_SDLWindow = SDL_CreateWindow("Eds Graphics Jam Sandpit", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
+        m_SDLWindow = SDL_CreateWindow("Eds Graphics Jam Sandpit", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_OPENGL);
 
         if (m_SDLWindow == nullptr)
         {
@@ -101,42 +95,23 @@ ProcessState EngineLoop::SDLInit()
         }
         else
         {
+            SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
+            SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 6);
+            SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+
+            context = SDL_GL_CreateContext(m_SDLWindow);
+
+            if (context == nullptr)
+            {
+                SDLCleanup();
+                return ProcessState::NOT_OKAY;
+            }
+
             m_mainSurface = SDL_GetWindowSurface(m_SDLWindow);
         }
     }
 
-    return ProcessState::OKAY;
-}
-
-void EngineLoop::SDLCleanup()
-{
-    m_mainSurface = nullptr;
-    SDL_DestroyWindow(m_SDLWindow);
-    m_SDLWindow = nullptr;
-
-    SDL_Quit();
-}
-
-ProcessState EngineLoop::OpenGLInit(const char* computePath)
-{
-    glfwInit();
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
-    GLFWwindow* window = glfwCreateWindow(1, 1, "Eds Graphics Jam Sandpit", NULL, NULL);
-
-    if (window == nullptr)
-    {
-        OpenGLCleanup();
-        printf("Unable to create GLFW window\n");
-        return ProcessState::NOT_OKAY;
-    }
-    glfwMakeContextCurrent(window);
-
-    m_OpenGLWindow = window;
-
-    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+    if (!gladLoadGLLoader((GLADloadproc)SDL_GL_GetProcAddress))
     {
         printf("Failed to initialize GLAD\n");
         return ProcessState::NOT_OKAY;
@@ -153,8 +128,11 @@ ProcessState EngineLoop::OpenGLInit(const char* computePath)
     return ProcessState::OKAY;
 }
 
-void EngineLoop::OpenGLCleanup()
+void EngineLoop::SDLCleanup()
 {
-    glfwDestroyWindow(m_OpenGLWindow);
-    glfwTerminate();
+    m_mainSurface = nullptr;
+    SDL_DestroyWindow(m_SDLWindow);
+    m_SDLWindow = nullptr;
+
+    SDL_Quit();
 }

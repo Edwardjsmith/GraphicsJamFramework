@@ -29,14 +29,11 @@ private:
 
 	SDL_Event SDLEvent;
 
-	ProcessState SDLInit();
+	ProcessState SDLInit(const char* computePath);
 	void SDLCleanup();
 
-//OpenGL stuff
-	ProcessState OpenGLInit(const char* computePath);
-	void OpenGLCleanup();
-
-	GLFWwindow* m_OpenGLWindow = nullptr;
+//OpenGL context
+	SDL_GLContext context = nullptr;
 
 	std::unique_ptr<Camera> m_Camera = nullptr;
 };

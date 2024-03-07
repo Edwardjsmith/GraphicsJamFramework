@@ -23,7 +23,7 @@ public:
 	void Draw(float delta);
 
 	glm::vec3 GetPosition() const;
-	void SetPosition(glm::vec3 newPosition);
+	void SetPosition(glm::vec3& newPosition);
 
 	glm::vec3 GetCameraForward() const;
 	glm::vec3 GetCameraUp() const;
@@ -39,7 +39,7 @@ public:
 	float GetYaw() const;
 	void SetYaw(float yaw);
 
-	void InitShader(const char* path);
+	ProcessState InitShader(const char* path);
 
 	void* GetPixelData();
 
@@ -51,6 +51,9 @@ private:
 	glm::vec3 m_up;
 	glm::vec3 m_right;
 	glm::vec3 m_forward;
+
+	glm::mat4 m_projection;
+	glm::mat4 m_view;
 
 	float m_speed;
 

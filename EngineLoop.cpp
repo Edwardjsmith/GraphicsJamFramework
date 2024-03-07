@@ -14,6 +14,9 @@ ProcessState EngineLoop::Init()
 
 ProcessState EngineLoop::Draw()
 {
+    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
     if (m_Camera == nullptr)
     {
         printf("Camera was null!");
@@ -36,9 +39,9 @@ ProcessState EngineLoop::Draw()
             {
                 PixelData& data = static_cast<PixelData*>(pixelData)[i + (j * SCREEN_WIDTH)];
 
-                const float r = data.color.r;
-                const float g = data.color.g;
-                const float b = data.color.b;
+                const Uint8 r = data.color.r;
+                const Uint8 g = data.color.g;
+                const Uint8 b = data.color.b;
 
                 //const float coordX = data.coords.x;
                 //const float coordY = data.coords.y;
@@ -56,14 +59,105 @@ ProcessState EngineLoop::Draw()
         return ProcessState::NOT_OKAY;
     }
 
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-
     return ProcessState::OKAY;
 }
 
-ProcessState EngineLoop::Update()
+void EngineLoop::HandleMouseMovement(float& offsetX, float& offsetY)
+{
+    int xPos, yPos;
+    SDL_GetMouseState(&xPos, &yPos);
+
+    offsetX = (xPos - m_lastMouseX) * m_sensitivity;
+    offsetY = (m_lastMouseY - yPos) * m_sensitivity; // reversed since y-coordinates range from bottom to top
+
+    m_lastMouseX = xPos;
+    m_lastMouseY = yPos;
+}
+
+ProcessState EngineLoop::Update(float delta)
 {
     SDL_PollEvent(&SDLEvent);
+
+    if (m_Camera)
+    {
+        const glm::vec3& cameraPos = m_Camera->GetPosition();
+        const glm::vec3& cameraUp = m_Camera->GetCameraUp();
+        const glm::vec3& cameraForward = m_Camera->GetCameraForward();
+        const glm::vec3& cameraRight = m_Camera->GetCameraRight();
+        const float cameraSpeed = m_Camera->GetCameraSpeed() * delta;
+
+        glm::vec3 newPos = glm::vec3(0);
+
+        switch (SDLEvent.type)
+        {
+            case SDL_KEYDOWN:
+            {
+                switch (SDLEvent.key.keysym.sym)
+                {
+                    case SDLK_LEFT:
+                    {
+                        newPos = cameraPos - glm::normalize(glm::cross(cameraForward, cameraUp)) * cameraSpeed;
+                        m_Camera->SetPosition(newPos);
+                        break;
+                    }
+                    case SDLK_RIGHT:
+                    {
+                        newPos = cameraPos + glm::normalize(glm::cross(cameraForward, cameraUp)) * cameraSpeed;
+                        m_Camera->SetPosition(newPos);
+                        break;
+                    }
+                    case SDLK_UP:
+                    {
+                        newPos = cameraPos + cameraForward * cameraSpeed;
+                        m_Camera->SetPosition(newPos);
+                        break;
+                    }
+                    case SDLK_DOWN:
+                    {
+                        newPos = cameraPos - cameraForward * cameraSpeed;
+                        m_Camera->SetPosition(newPos);
+                        break;
+                    }
+                    default: break;
+
+                }
+                break;
+            }
+            case SDL_KEYUP:
+            {
+                switch (SDLEvent.key.keysym.sym)
+                {
+                case SDLK_LEFT:
+                {
+                    break;
+                }
+                case SDLK_RIGHT:
+                {
+                    break;
+                }
+                case SDLK_UP:
+                {
+                    break;
+                }
+                case SDLK_DOWN:
+                {
+                    break;
+                }
+                default: break;
+
+                }
+                break;
+            }
+        }
+
+        float offsetX, offsetY;
+        HandleMouseMovement(offsetX, offsetY);
+
+        m_Camera->SetYaw(m_Camera->GetYaw() + offsetX);
+        m_Camera->SetPitch(m_Camera->GetPitch() + offsetY);
+    }
+
+
     return ProcessState::OKAY;
 }
 
@@ -97,13 +191,12 @@ ProcessState EngineLoop::SDLInit(const char* computePath)
         {
             SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
             SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 6);
-            SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+            SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_COMPATIBILITY);
 
             context = SDL_GL_CreateContext(m_SDLWindow);
 
             if (context == nullptr)
             {
-                SDLCleanup();
                 return ProcessState::NOT_OKAY;
             }
 
@@ -118,12 +211,16 @@ ProcessState EngineLoop::SDLInit(const char* computePath)
     }
 
 
-    glm::vec3 pos = glm::vec3(0.0f, 0.0f, 0.0f);
+    glm::vec3 pos = glm::vec3(0.0f, 0.0f, 3.0f);
     glm::vec3 target = glm::vec3(0.0f, 0.0f, 0.0f);
     glm::vec3 worldUp = glm::vec3(0.0f, 1.0f, 0.0f);
 
-    m_Camera = std::make_unique<Camera>(pos, target, worldUp, 5.0f, 0.0f, -90.0f);
-    m_Camera->InitShader(computePath);
+    m_Camera = std::make_unique<Camera>(pos, target, worldUp, 50.0f, 0.0f, -90.0f);
+
+    if (m_Camera->InitShader(computePath) != ProcessState::OKAY)
+    {
+        return ProcessState::NOT_OKAY;
+    }
 
     return ProcessState::OKAY;
 }
@@ -133,6 +230,7 @@ void EngineLoop::SDLCleanup()
     m_mainSurface = nullptr;
     SDL_DestroyWindow(m_SDLWindow);
     m_SDLWindow = nullptr;
+    SDL_GL_DeleteContext(context);
 
     SDL_Quit();
 }

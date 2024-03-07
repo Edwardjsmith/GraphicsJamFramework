@@ -3,19 +3,13 @@
 #include "Camera.h"
 #undef main
 
-enum class ProcessState
-{
-	NOT_OKAY = -1,
-	OKAY = 0
-};
-
 class EngineLoop
 {
 public:
 
 	ProcessState Init();
 	ProcessState Draw();
-	ProcessState Update();
+	ProcessState Update(float delta);
 
 	void Cleanup();
 
@@ -36,5 +30,11 @@ private:
 	SDL_GLContext context = nullptr;
 
 	std::unique_ptr<Camera> m_Camera = nullptr;
+
+//Mouse stuff
+	double m_lastMouseX = SCREEN_WIDTH * 0.5, m_lastMouseY = SCREEN_HEIGHT * 0.5;
+	const float m_sensitivity = 2.0f;
+
+	void HandleMouseMovement(float& offsetX, float& offsetY);
 };
 

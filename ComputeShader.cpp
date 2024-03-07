@@ -19,17 +19,17 @@ void ParseSourceFromFilepath(const char* InFilePath, std::string& OutSourceStrin
     OutSourceString = ss.str();
 }
 
-ComputeShader::ComputeShader(const char* computePath)
+ProcessState ComputeShader::CompileShader(const char* computePath)
 {
-	unsigned int compute = glCreateShader(GL_COMPUTE_SHADER);
+    unsigned int compute = glCreateShader(GL_COMPUTE_SHADER);
 
     std::string sourceString;
     ParseSourceFromFilepath(computePath, sourceString);
 
     const char* sourceChar = sourceString.c_str();
 
-	glShaderSource(compute, 1, &sourceChar, NULL);
-	glCompileShader(compute);
+    glShaderSource(compute, 1, &sourceChar, NULL);
+    glCompileShader(compute);
 
     int success = 0;
     glGetShaderiv(compute, GL_COMPILE_STATUS, &success);
@@ -40,8 +40,9 @@ ComputeShader::ComputeShader(const char* computePath)
     {
         glGetShaderInfoLog(compute, 512, NULL, infoLog);
         printf("Unable to compile compute shader: %s\n", infoLog);
+        return ProcessState::NOT_OKAY;
     }
-	
+
     ID = glCreateProgram();
     glAttachShader(ID, compute);
     glLinkProgram(ID);
@@ -51,7 +52,9 @@ ComputeShader::ComputeShader(const char* computePath)
     {
         glGetProgramInfoLog(ID, 512, NULL, infoLog);
         printf("Failed to link compute shader: %s\n", infoLog);
+        return ProcessState::NOT_OKAY;
     }
 
     glDeleteShader(compute);
+    return ProcessState::OKAY;
 }

@@ -10,9 +10,19 @@ int main()
 
 	currentState = engineLoopInstance->Init();
 
+	Uint32 NOW = SDL_GetPerformanceCounter();
+	Uint32 LAST = 0;
+
+	double delta = 0.0f;
+
 	while (!engineLoopInstance->ShutdownPending() && currentState == ProcessState::OKAY)
 	{
-		currentState = engineLoopInstance->Update();
+		LAST = NOW;
+		NOW = SDL_GetPerformanceCounter();
+
+		delta = static_cast<double>((NOW - LAST) / static_cast<double>(SDL_GetPerformanceFrequency()));
+
+		currentState = engineLoopInstance->Update(delta);
 
 		if (currentState != ProcessState::OKAY)
 		{

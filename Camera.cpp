@@ -35,6 +35,9 @@ void Camera::Update(float delta)
 	m_direction.z = sin(glm::radians(m_yaw)) * cos(glm::radians(m_pitch));
 	m_direction.y = sin(glm::radians(m_pitch));
 
+	m_projection = glm::perspective(glm::radians(45.0f), static_cast<float>(SCREEN_WIDTH / SCREEN_HEIGHT), 0.1f, 100.0f);
+	m_view = glm::lookAt(m_position, m_position + m_forward, m_up);
+
 	m_forward = glm::normalize(m_direction);
 }
 
@@ -43,15 +46,11 @@ void Camera::Draw(float delta)
 	if (m_ComputeShader)
 	{
 		m_ComputeShader->Use();
-		//m_ComputeShader->SetFloat("delta", delta);
-		//m_ComputeShader->SetVec3("cameraLowerLeft", GetCameraLowerLeft());
-		//m_ComputeShader->SetVec3("cameraRight", m_right);
-		//m_ComputeShader->SetVec3("cameraUp", m_up);
-		//m_ComputeShader->SetVec3("cameraPos", m_position);
+
+		m_ComputeShader->SetMatrix("inverseProjectionView", glm::inverse(m_view * m_projection));
+		m_ComputeShader->SetVec3("cameraPos", m_position);
 		m_ComputeShader->SetInt("screenWidth", SCREEN_WIDTH);
 		m_ComputeShader->SetInt("screenHeight", SCREEN_HEIGHT);
-
-		//glm::uvec2 dims= { SCREEN_WIDTH , SCREEN_HEIGHT }
 
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, m_pixelBuffer);
 		glDispatchCompute(SCREEN_WIDTH / 8, SCREEN_HEIGHT / 8, 1);
@@ -65,7 +64,7 @@ glm::vec3 Camera::GetPosition() const
 	return m_position;
 }
 
-void Camera::SetPosition(glm::vec3 newPosition)
+void Camera::SetPosition(glm::vec3& newPosition)
 {
 	m_position = newPosition;
 }
@@ -115,14 +114,21 @@ void Camera::SetYaw(float yaw)
 	m_yaw = yaw;
 }
 
-void Camera::InitShader(const char* path)
+ProcessState Camera::InitShader(const char* path)
 {
-	m_ComputeShader = std::make_unique<ComputeShader>(path);
+	m_ComputeShader = std::make_unique<ComputeShader>();
+
+	if (m_ComputeShader->CompileShader(path) != ProcessState::OKAY)
+	{
+		return ProcessState::NOT_OKAY;
+	}
 
 	glGenBuffers(1, &m_pixelBuffer);
 	glBindBuffer(GL_ARRAY_BUFFER, m_pixelBuffer);
 	glBufferData(GL_ARRAY_BUFFER, (SCREEN_WIDTH * SCREEN_HEIGHT) * sizeof(PixelData), 0, GL_STATIC_DRAW);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+	return ProcessState::OKAY;
 }
 
 void* Camera::GetPixelData()

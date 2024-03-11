@@ -13,6 +13,10 @@ Camera::Camera(glm::vec3& position, glm::vec3& targetLoc, glm::vec3& worldUp, fl
 
 	m_pitch = pitch;
 	m_yaw = yaw;
+
+	m_view = glm::lookAt(glm::vec3(0.0f, 0.0f, 3.0f),
+		glm::vec3(0.0f, 0.0f, 0.0f),
+		glm::vec3(0.0f, 1.0f, 0.0f));
 }
 
 Camera::~Camera()
@@ -35,19 +39,22 @@ void Camera::Update(float delta)
 	m_direction.z = sin(glm::radians(m_yaw)) * cos(glm::radians(m_pitch));
 	m_direction.y = sin(glm::radians(m_pitch));
 
-	m_projection = glm::perspective(glm::radians(45.0f), static_cast<float>(SCREEN_WIDTH / SCREEN_HEIGHT), 0.1f, 100.0f);
-	m_view = glm::lookAt(m_position, m_position + m_forward, m_up);
-
 	m_forward = glm::normalize(m_direction);
+
+	m_projection = glm::perspective(glm::radians(45.0f), static_cast<float>(SCREEN_WIDTH / SCREEN_HEIGHT), 0.1f, 100.0f);
+	//m_projection = glm::ortho(0.0f, (float)SCREEN_WIDTH, (float)SCREEN_HEIGHT, 0.0f);
+	m_view = glm::lookAt(m_position, m_position + m_forward, m_up);
 }
 
 void Camera::Draw(float delta)
 {
-	if (m_ComputeShader)
+	if (m_ComputeShader) 
 	{
 		m_ComputeShader->Use();
 
-		m_ComputeShader->SetMatrix("inverseProjectionView", glm::inverse(m_view * m_projection));
+		m_ComputeShader->SetMatrix("inverseProjection", glm::inverse(m_projection));
+		m_ComputeShader->SetMatrix("inverseView", glm::inverse(m_view));
+		//m_ComputeShader->SetVec3("cameraForward", m_direction);
 		m_ComputeShader->SetVec3("cameraPos", m_position);
 		m_ComputeShader->SetInt("screenWidth", SCREEN_WIDTH);
 		m_ComputeShader->SetInt("screenHeight", SCREEN_HEIGHT);
@@ -56,6 +63,8 @@ void Camera::Draw(float delta)
 		glDispatchCompute(SCREEN_WIDTH / 8, SCREEN_HEIGHT / 8, 1);
 		glMemoryBarrier(GL_ALL_BARRIER_BITS);
 		glGetBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, (SCREEN_WIDTH * SCREEN_HEIGHT) * sizeof(PixelData), (GLvoid*)m_PixelData);
+
+		glDrawElements(GL_TRIANGLES, 0, 0, 0);
 	}
 }
 

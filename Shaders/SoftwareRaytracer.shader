@@ -25,14 +25,17 @@ layout(binding = 0) buffer block
 	PixelData data[];
 } outBuffer;
 
-uniform mat4 inverseProjectionView;
+uniform mat4 inverseProjection;
+uniform mat4 inverseView;
 
 uniform int screenWidth = 640;
 uniform int screenHeight = 480;
 
 uniform vec3 cameraPos;
+uniform vec3 cameraForward;
 
-vec4 screenCentre = vec4(screenWidth * 0.5, screenHeight * 0.5, 0, 1);
+float halfScreenHeight = screenHeight * 0.5f;
+float halfScreenWidth = screenWidth * 0.5f;
 
 Ray GetRay(in vec3 pos, in vec3 direction)
 {
@@ -45,44 +48,54 @@ Ray GetRay(in vec3 pos, in vec3 direction)
 
 bool SphereHit(in vec3 centre, float minDist, float maxDist, float radius, in Ray ray)
 {
-	vec3 diff = ray.Origin - centre;
-	float a = dot(diff, ray.Direction);
+	// work out components of quadratic
+	vec3 dist = ray.Origin - centre;
+	float b = dot(ray.Direction, dist);
+	float c = dot(dist, dist) - radius * radius;
+	float b_squared_minus_c = b * b - c;
 
-	if (a < 0)
-	{
-		return false;
+	// check for "imaginary" answer. == ray completely misses sphere
+	if (b_squared_minus_c < 0.0f) 
+	{ 
+		return false; 
 	}
 
-	float b = length(diff);
-
-	float c = (a * a) - (b * b);
-	float radiusSquared = radius * radius;
-
-	if (c > radiusSquared)
+	// check for ray hitting twice (in and out of the sphere)
+	if (b_squared_minus_c > 0.0f) 
 	{
-		return false;
-	}
+		// get the 2 intersection distances along ray
+		float t_a = -b + sqrt(b_squared_minus_c);
+		float t_b = -b - sqrt(b_squared_minus_c);
 
-	float d = sqrt(radiusSquared - c);
-
-	float pointOne = a - d;
-
-	if (pointOne < minDist || pointOne > maxDist)
-	{
-		float pointTwo = a + d;
-
-		if (pointTwo < minDist || pointTwo > maxDist)
+		// if behind viewer, throw one or both away
+		if (t_a < 0.0)
 		{
+			if (t_b < 0.0) 
+			{
+				return false; 
+			}
+		}
+
+		return true;
+	}
+
+	// check for ray hitting once (skimming the surface)
+	if (0.0f == b_squared_minus_c) 
+	{
+		// if behind viewer, throw away
+		float t = -b + sqrt(b_squared_minus_c);
+		if (t < 0.0f) 
+		{ 
 			return false;
 		}
-	}
 
-	return true;
+		return true;
+	}
 }
 
 vec3 GetRayColor(in Ray ray, uint x, uint y)
 {
-	if (SphereHit(vec3(0, 0, 0), 0.001f, 1000000.0f, 0.5, ray))
+	if (SphereHit(vec3(0, 0, 0), 0.001f, 1000000.0f, 0.5f, ray))
 	{
 		return vec3(0, 0, 255);
 	}
@@ -91,7 +104,7 @@ vec3 GetRayColor(in Ray ray, uint x, uint y)
 	float colourY = (y / (screenHeight * 2.0f)) * 255.0f;
 
 	return vec3(colourX, colourY, 0);
-}   
+}
 
 layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
 void main()
@@ -99,13 +112,24 @@ void main()
 	uint indexX = (gl_WorkGroupID.x * gl_WorkGroupSize.x) + gl_LocalInvocationID.x;
 	uint indexY = (gl_WorkGroupID.y * gl_WorkGroupSize.y) + gl_LocalInvocationID.y;
 
-	vec4 pixelCentre = vec4(indexX, indexY, cameraPos.z, 0);
+	//Convert pixel pos to normalized screen coords (X [-1, 1], Y [-1, 1], Z [-1, 1])
+	float xPos = ((2.0f * indexX) / screenWidth) - 1.0f;
+	float yPos = (1.0f - (2.0f * indexY) / screenHeight);
+	float zPos = -1.0f;
 
-	vec4 screenDir = screenCentre - pixelCentre;
-	
-	vec4 rayDir = normalize(vec4(inverseProjectionView * vec4(screenDir)));
+	vec3 rayNDS = vec3(xPos, yPos, zPos);
 
-	Ray ray = GetRay(cameraPos + pixelCentre.xyz, rayDir.xyz);
+	//Homogeneous clip coords
+	vec4 rayClip = vec4(rayNDS.xyz, 1.0);
+
+	//Camera coords
+	vec4 rayCamera = inverseProjection * rayClip;
+	rayCamera = vec4(rayCamera.xy, -1.0f, 0.0f);
+
+	//World Coords
+	vec3 rayWorld = normalize((inverseView * rayCamera).xyz);
+
+	Ray ray = GetRay(cameraPos, rayWorld);
 
 	outBuffer.data[indexX + (indexY * screenWidth)].color = vec4(GetRayColor(ray, indexX, indexY), 1.0f);
 }

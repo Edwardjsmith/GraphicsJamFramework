@@ -80,6 +80,8 @@ ProcessState EngineLoop::Update(float delta)
 
     if (m_Camera)
     {
+        m_Camera->Update(delta);
+
         const glm::vec3& cameraPos = m_Camera->GetPosition();
         const glm::vec3& cameraUp = m_Camera->GetCameraUp();
         const glm::vec3& cameraForward = m_Camera->GetCameraForward();
@@ -108,13 +110,13 @@ ProcessState EngineLoop::Update(float delta)
                     }
                     case SDLK_UP:
                     {
-                        newPos = cameraPos + cameraForward * cameraSpeed;
+                        newPos = cameraPos + (cameraForward * cameraSpeed);
                         m_Camera->SetPosition(newPos);
                         break;
                     }
                     case SDLK_DOWN:
                     {
-                        newPos = cameraPos - cameraForward * cameraSpeed;
+                        newPos = cameraPos - (cameraForward * cameraSpeed);
                         m_Camera->SetPosition(newPos);
                         break;
                     }
@@ -211,11 +213,11 @@ ProcessState EngineLoop::SDLInit(const char* computePath)
     }
 
 
-    glm::vec3 pos = glm::vec3(0.0f, 0.0f, 3.0f);
+    glm::vec3 pos = glm::vec3(0.0f, 0.0f, -3.0f);
     glm::vec3 target = glm::vec3(0.0f, 0.0f, 0.0f);
     glm::vec3 worldUp = glm::vec3(0.0f, 1.0f, 0.0f);
 
-    m_Camera = std::make_unique<Camera>(pos, target, worldUp, 50.0f, 0.0f, -90.0f);
+    m_Camera = std::make_unique<Camera>(pos, target, worldUp, 5.0f, 0.0f, 0.0f);
 
     if (m_Camera->InitShader(computePath) != ProcessState::OKAY)
     {

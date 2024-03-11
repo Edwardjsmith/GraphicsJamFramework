@@ -33,7 +33,7 @@ private:
 
 //Mouse stuff
 	double m_lastMouseX = SCREEN_WIDTH * 0.5, m_lastMouseY = SCREEN_HEIGHT * 0.5;
-	const float m_sensitivity = 2.0f;
+	const float m_sensitivity = 0.5f;
 
 	void HandleMouseMovement(float& offsetX, float& offsetY);
 };

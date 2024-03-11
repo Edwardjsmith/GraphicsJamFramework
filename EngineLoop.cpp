@@ -224,6 +224,8 @@ ProcessState EngineLoop::SDLInit(const char* computePath)
         return ProcessState::NOT_OKAY;
     }
 
+    SDL_SetRelativeMouseMode(SDL_TRUE);
+
     return ProcessState::OKAY;
 }
 

@@ -3,6 +3,10 @@
 #include <memory>
 #include "ComputeShader.h"
 
+#ifndef RAYTRACER
+#define RAYTRACER 0;
+#endif
+
 const unsigned int SCREEN_WIDTH = 640;
 const unsigned int SCREEN_HEIGHT = 480;
 

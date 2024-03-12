@@ -2,7 +2,14 @@
 
 ProcessState EngineLoop::Init()
 {
-    if (SDLInit("Shaders/SoftwareRaytracer.shader") != ProcessState::OKAY)
+    std::string shaderSrc;
+#if RAYTRACER 1
+    shaderSrc = "Shaders/SoftwareRaytracer.shader";
+#else
+    shaderSrc = "Shaders/SoftwareRasterizer.shader";
+#endif
+
+    if (SDLInit(shaderSrc.c_str()) != ProcessState::OKAY)
     {
         return ProcessState::NOT_OKAY;
     }
@@ -42,9 +49,6 @@ ProcessState EngineLoop::Draw()
                 const Uint8 r = data.color.r;
                 const Uint8 g = data.color.g;
                 const Uint8 b = data.color.b;
-
-                //const float coordX = data.coords.x;
-                //const float coordY = data.coords.y;
 
                 pixels[i + (j * SCREEN_WIDTH)] = SDL_MapRGB(m_mainSurface->format, r, g, b);
             }

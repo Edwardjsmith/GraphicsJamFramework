@@ -10,20 +10,22 @@ layout(binding = 0) buffer block
 	PixelData data[];
 } outBuffer;
 
-// This defines the dimensions of the compute shaders local group.
-// This is the smallest group of times that this compute shader will be invoked on the data set.
-// Multiplying all 3 values gives us the "volume" of one operation.
-// When glDispatchCompute is called, it takes in 3 values that define how many local groups to run.
-// In this case, we just want to operate on one thing at a time.
-layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
-layout(location = 0) uniform float delta;
+uniform int screenWidth = 640;
+uniform int screenHeight = 480;
 
-int maxIndex = 640 * 480;
+uniform vec3 cameraPos;
 
+layout(local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
 void main()
 {
-	for (int i = 0; i < maxIndex; ++i)
-	{
-		outBuffer.data[i].color = vec4(0, 0, 255, 0) * delta;
-	}
+	uint indexX = (gl_WorkGroupID.x * gl_WorkGroupSize.x) + gl_LocalInvocationID.x;
+	uint indexY = (gl_WorkGroupID.y * gl_WorkGroupSize.y) + gl_LocalInvocationID.y;
+
+	cameraPos;
+
+	float colourX = (indexX / (screenWidth * 2.0f)) * 255.0f;
+	float colourY = (indexY / (screenHeight * 2.0f)) * 255.0f;
+
+
+	outBuffer.data[indexX + (indexY * screenWidth)].color = vec4(vec3(colourX, colourY, 0), 1.0f);
 }

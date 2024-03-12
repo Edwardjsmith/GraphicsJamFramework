@@ -52,15 +52,18 @@ void Camera::Draw(float delta)
 	{
 		m_ComputeShader->Use();
 
-		m_ComputeShader->SetMatrix("inverseProjection", glm::inverse(m_projection));
-		m_ComputeShader->SetMatrix("inverseView", glm::inverse(m_view));
-		//m_ComputeShader->SetVec3("cameraForward", m_direction);
 		m_ComputeShader->SetVec3("cameraPos", m_position);
 		m_ComputeShader->SetInt("screenWidth", SCREEN_WIDTH);
 		m_ComputeShader->SetInt("screenHeight", SCREEN_HEIGHT);
 
+#if RAYTRACER 1
+		m_ComputeShader->SetMatrix("inverseProjection", glm::inverse(m_projection));
+		m_ComputeShader->SetMatrix("inverseView", glm::inverse(m_view));
+#endif
+
+
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, m_pixelBuffer);
-		glDispatchCompute(SCREEN_WIDTH / 8, SCREEN_HEIGHT / 8, 1);
+		glDispatchCompute(SCREEN_WIDTH / 16, SCREEN_HEIGHT / 16, 1);
 		glMemoryBarrier(GL_ALL_BARRIER_BITS);
 		glGetBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, (SCREEN_WIDTH * SCREEN_HEIGHT) * sizeof(PixelData), (GLvoid*)m_PixelData);
 

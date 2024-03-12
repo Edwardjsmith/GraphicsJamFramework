@@ -80,7 +80,7 @@ bool SphereHit(in vec3 centre, float minDist, float maxDist, float radius, in Ra
 	}
 
 	// check for ray hitting once (skimming the surface)
-	if (0.0f == b_squared_minus_c) 
+	if (b_squared_minus_c == 0.0f) 
 	{
 		// if behind viewer, throw away
 		float t = -b + sqrt(b_squared_minus_c);
@@ -95,7 +95,7 @@ bool SphereHit(in vec3 centre, float minDist, float maxDist, float radius, in Ra
 
 vec3 GetRayColor(in Ray ray, uint x, uint y)
 {
-	if (SphereHit(vec3(0, 0, 0), 0.001f, 1000000.0f, 0.5f, ray))
+	if (SphereHit(vec3(0, 0, -1), 0.001f, 1000000.0f, 0.5f, ray))
 	{
 		return vec3(0, 0, 255);
 	}
@@ -106,13 +106,13 @@ vec3 GetRayColor(in Ray ray, uint x, uint y)
 	return vec3(colourX, colourY, 0);
 }
 
-layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
+layout(local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
 void main()
 {
 	uint indexX = (gl_WorkGroupID.x * gl_WorkGroupSize.x) + gl_LocalInvocationID.x;
 	uint indexY = (gl_WorkGroupID.y * gl_WorkGroupSize.y) + gl_LocalInvocationID.y;
 
-	//Convert pixel pos to normalized screen coords (X [-1, 1], Y [-1, 1], Z [-1, 1])
+	//Convert pixel pos to normalized device coords (X [-1, 1], Y [-1, 1], Z [-1, 1])
 	float xPos = ((2.0f * indexX) / screenWidth) - 1.0f;
 	float yPos = (1.0f - (2.0f * indexY) / screenHeight);
 	float zPos = -1.0f;
@@ -127,9 +127,9 @@ void main()
 	rayCamera = vec4(rayCamera.xy, -1.0f, 0.0f);
 
 	//World Coords
-	vec3 rayWorld = normalize((inverseView * rayCamera).xyz);
+	vec3 rayWorldDir = normalize((inverseView * rayCamera).xyz);
 
-	Ray ray = GetRay(cameraPos, rayWorld);
+	Ray ray = GetRay(cameraPos, rayWorldDir);
 
 	outBuffer.data[indexX + (indexY * screenWidth)].color = vec4(GetRayColor(ray, indexX, indexY), 1.0f);
 }

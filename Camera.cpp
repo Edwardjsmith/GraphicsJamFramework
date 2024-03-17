@@ -46,6 +46,9 @@ void Camera::Update(float delta)
 	m_view = glm::lookAt(m_position, m_position + m_forward, m_up);
 }
 
+const int GDispatchX = SCREEN_WIDTH / 16;
+const int GDispatchY = SCREEN_HEIGHT / 16;
+
 void Camera::Draw(float delta)
 {
 	if (m_ComputeShader) 
@@ -59,13 +62,16 @@ void Camera::Draw(float delta)
 #if RAYTRACER 1
 		m_ComputeShader->SetMatrix("inverseProjection", glm::inverse(m_projection));
 		m_ComputeShader->SetMatrix("inverseView", glm::inverse(m_view));
+#else
+		m_ComputeShader->SetMatrix("Projection", m_projection);
+		m_ComputeShader->SetMatrix("View", m_view);
 #endif
 
 
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, m_pixelBuffer);
-		glDispatchCompute(SCREEN_WIDTH / 16, SCREEN_HEIGHT / 16, 1);
+		glDispatchCompute(GDispatchX, GDispatchY, 1);
 		glMemoryBarrier(GL_ALL_BARRIER_BITS);
-		glGetBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, (SCREEN_WIDTH * SCREEN_HEIGHT) * sizeof(PixelData), (GLvoid*)m_PixelData);
+		glGetBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(m_PixelData), (GLvoid*)m_PixelData);
 
 		glDrawElements(GL_TRIANGLES, 0, 0, 0);
 	}
@@ -137,13 +143,20 @@ ProcessState Camera::InitShader(const char* path)
 
 	glGenBuffers(1, &m_pixelBuffer);
 	glBindBuffer(GL_ARRAY_BUFFER, m_pixelBuffer);
-	glBufferData(GL_ARRAY_BUFFER, (SCREEN_WIDTH * SCREEN_HEIGHT) * sizeof(PixelData), 0, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(m_PixelData), 0, GL_DYNAMIC_DRAW);
+
+#if RAYTRACER 0
+	glGenBuffers(1, &m_DepthBuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, m_DepthBuffer);
+	glBufferData(GL_ARRAY_BUFFER, (SCREEN_WIDTH * SCREEN_HEIGHT) * sizeof(float), 0, GL_DYNAMIC_DRAW);
+#endif
+
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 	return ProcessState::OKAY;
 }
 
-void* Camera::GetPixelData()
+const void* Camera::GetPixelData()
 {
 	return &m_PixelData;
 }

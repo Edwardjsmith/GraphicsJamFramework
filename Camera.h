@@ -4,7 +4,7 @@
 #include "ComputeShader.h"
 
 #ifndef RAYTRACER
-#define RAYTRACER 0;
+	#define RAYTRACER 0;
 #endif
 
 const unsigned int SCREEN_WIDTH = 640;
@@ -45,7 +45,7 @@ public:
 
 	ProcessState InitShader(const char* path);
 
-	void* GetPixelData();
+	const void* GetPixelData();
 
 private:
 
@@ -68,5 +68,6 @@ private:
 	PixelData m_PixelData[SCREEN_WIDTH * SCREEN_HEIGHT];
 
 	GLuint m_pixelBuffer = 0;
+	GLuint m_DepthBuffer = 0;
 };
 

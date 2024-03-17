@@ -30,7 +30,7 @@ ProcessState EngineLoop::Draw()
         return ProcessState::NOT_OKAY;
     }
 
-    m_Camera->Draw((float)0);
+    m_Camera->Draw(0.0f);
 
     if (m_SDLWindow && m_mainSurface)
     {
@@ -38,17 +38,17 @@ ProcessState EngineLoop::Draw()
 
         Uint32* const pixels = (Uint32*)m_mainSurface->pixels;
 
-        void* const pixelData = m_Camera->GetPixelData();
+        const void* const pixelData = m_Camera->GetPixelData();
 
         for (int i = 0; i < SCREEN_WIDTH; ++i)
         {
             for (int j = 0; j < SCREEN_HEIGHT; ++j)
             {
-                PixelData& data = static_cast<PixelData*>(pixelData)[i + (j * SCREEN_WIDTH)];
+                const PixelData& data = static_cast<const PixelData*>(pixelData)[i + (j * SCREEN_WIDTH)];
 
-                const Uint8 r = data.color.r;
-                const Uint8 g = data.color.g;
-                const Uint8 b = data.color.b;
+                const Uint8 r = static_cast<Uint8>(data.color.r);
+                const Uint8 g = static_cast<Uint8>(data.color.g);
+                const Uint8 b = static_cast<Uint8>(data.color.b);
 
                 pixels[i + (j * SCREEN_WIDTH)] = SDL_MapRGB(m_mainSurface->format, r, g, b);
             }
@@ -74,8 +74,8 @@ void EngineLoop::HandleMouseMovement(float& offsetX, float& offsetY)
     offsetX = (xPos - m_lastMouseX) * m_sensitivity;
     offsetY = (m_lastMouseY - yPos) * m_sensitivity; // reversed since y-coordinates range from bottom to top
 
-    m_lastMouseX = xPos;
-    m_lastMouseY = yPos;
+    m_lastMouseX = static_cast<float>(xPos);
+    m_lastMouseY = static_cast<float>(yPos);
 }
 
 ProcessState EngineLoop::Update(float delta)

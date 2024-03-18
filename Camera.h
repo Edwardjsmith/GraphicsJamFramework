@@ -13,7 +13,6 @@ const unsigned int SCREEN_HEIGHT = 480;
 struct PixelData
 {
 	glm::vec4 color;
-	//glm::vec2 coords;
 };
 
 class Camera

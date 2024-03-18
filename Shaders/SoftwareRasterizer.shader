@@ -3,12 +3,11 @@
 struct PixelData
 {
 	vec4 color;
-	//vec2 screenCoords;
 };
 
 struct Triangle
 {
-	vec4 vertices[3];
+	vec3 vertices[3];
 	vec2 boxCoords[4];
 };
 
@@ -17,28 +16,33 @@ uniform mat4 View;
 
 void BuildTriangle(inout Triangle triangle, in vec3 left, in vec3 right, in vec3 top)
 {
-	triangle.vertices[0] = vec4(left, 1);
-	triangle.vertices[1] = vec4(right, 1);
-	triangle.vertices[2] = vec4(top, 1);
+	triangle.vertices[0] = left;
+	triangle.vertices[1] = right;
+	triangle.vertices[2] = top;
 }
 
-void ProjectTriangle(in Triangle triangle, out vec3 left, out vec3 right, out vec3 top)
-{
-	//Project triangle vertices
-	left = (View * Projection * triangle.vertices[0]).xyz;
-	right = (View * Projection * triangle.vertices[1]).xyz;
-	top = (View * Projection * triangle.vertices[2]).xyz;
+//void ProjectTriangle(in Triangle triangle, out vec3 left, out vec3 right, out vec3 top)
+//{
+//	//Project triangle vertices
+//	left = (View * Projection * triangle.vertices[0]).xyz;
+//	right = (View * Projection * triangle.vertices[1]).xyz;
+//	top = (View * Projection * triangle.vertices[2]).xyz;
+//
+//	//init box coords with projected coords
+//	triangle.boxCoords[0] = left.xy;
+//	triangle.boxCoords[1] = vec2(left.x, top.y);
+//	triangle.boxCoords[2] = vec2(right.x, top.y);
+//	triangle.boxCoords[3] = right.xy;
+//}
 
-	//init box coords with projected coords
-	triangle.boxCoords[0] = left.xy;
-	triangle.boxCoords[1] = vec2(left.x, top.y);
-	triangle.boxCoords[2] = vec2(right.x, top.y);
-	triangle.boxCoords[3] = right.xy;
+bool edgeFunc(in vec3 a, in vec3 b, in vec3 c)
+{
+	return ((c.x - a.x) * (b.y - a.y) - (c.y - a.y) * (b.x - a.x)) >= 0.0f;
 }
 
-bool PixelInsideTraingle(in vec3 left, in vec3 right, in vec3 top, vec2 pixelCoords)
+bool PixelInsideTraingle(in vec3 left, in vec3 right, in vec3 top, in vec3 pixelCoords)
 {
-	return false;
+	return edgeFunc(left, right, pixelCoords) && edgeFunc(right, top, pixelCoords) && edgeFunc(top, left, pixelCoords);
 }
 
 layout(binding = 0) buffer pixel
@@ -59,6 +63,11 @@ uniform vec3 cameraPos;
 float halfScreenHeight = screenHeight * 0.5f;
 float halfScreenWidth = screenWidth * 0.5f;
 
+vec3 ToRaster(in vec3 NDC)
+{
+	return vec3((NDC.x) * (screenWidth), (NDC.y) * screenHeight, 1.0f);
+}
+
 layout(local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
 void main()
 {
@@ -68,19 +77,13 @@ void main()
 	uint index = indexX + (indexY * screenWidth);
 	depthBuffer.data[index] = 10000000.0f;
 
-	//Build triangle
-	Triangle triangle;
-	vec3 triangleLeftCorner = vec3(halfScreenWidth - 10, halfScreenHeight - 10, -10);
-	vec3 triangleRightCorner = vec3(halfScreenWidth + 10, halfScreenHeight - 10, -10);
-	vec3 triangleTopCorner = vec3(halfScreenWidth, halfScreenHeight + 10, -10);
+	vec3 left = ToRaster(vec3(0.25f, 0.75f, 1.0f));
+	vec3 right = ToRaster(vec3(0.75f, 0.75f, 1.0f));
+	vec3 top = ToRaster(vec3(0.5f, 0.25f, 1.0f));
 
-	BuildTriangle(triangle, triangleLeftCorner, triangleRightCorner, triangleTopCorner);
-	ProjectTriangle(triangle, triangleLeftCorner, triangleRightCorner, triangleTopCorner);
-
-	if (PixelInsideTraingle(triangleLeftCorner, triangleRightCorner, triangleTopCorner, vec2(indexX, indexY)))
+	if (PixelInsideTraingle(left, right, top, vec3(indexX, indexY, 1)))
 	{
 		pixelDataBuffer.data[index].color = vec4(0.0f, 0.0f, 255.0f, 1.0f);
-		//pixelDataBuffer.data[index].screenCoords = vec2(indexX, indexY);
 	}
 	else
 	{
@@ -88,7 +91,6 @@ void main()
 		float colourY = (indexY / (screenHeight * 2.0f)) * 255.0f;
 
 		pixelDataBuffer.data[index].color = vec4(vec3(colourX, colourY, 0), 1.0f);
-		//pixelDataBuffer.data[index].screenCoords = vec2(indexX, indexY);
 	}
 
 	cameraPos;

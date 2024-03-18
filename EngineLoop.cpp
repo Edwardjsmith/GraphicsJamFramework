@@ -217,7 +217,7 @@ ProcessState EngineLoop::SDLInit(const char* computePath)
     }
 
 
-    glm::vec3 pos = glm::vec3(0.0f, 0.0f, -3.0f);
+    glm::vec3 pos = glm::vec3(-5.0f, -5.0f, -5.0f);
     glm::vec3 target = glm::vec3(0.0f, 0.0f, 0.0f);
     glm::vec3 worldUp = glm::vec3(0.0f, 1.0f, 0.0f);
 

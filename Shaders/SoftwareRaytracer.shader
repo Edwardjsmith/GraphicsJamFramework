@@ -17,7 +17,6 @@ vec3 CastRay(in Ray ray, float scalar) { return ray.Origin + (scalar * ray.Direc
 struct PixelData
 {
 	vec4 color;
-	//vec2 coords;
 };
 
 layout(binding = 0) buffer block
@@ -50,6 +49,14 @@ bool SphereHit(in vec3 centre, float minDist, float maxDist, float radius, in Ra
 {
 	// work out components of quadratic
 	vec3 dist = ray.Origin - centre;
+
+	float len = length(dist);
+
+	if (len < minDist || len > maxDist)
+	{
+		return false;
+	}
+
 	float b = dot(ray.Direction, dist);
 	float c = dot(dist, dist) - radius * radius;
 	float b_squared_minus_c = b * b - c;
@@ -95,7 +102,7 @@ bool SphereHit(in vec3 centre, float minDist, float maxDist, float radius, in Ra
 
 vec3 GetRayColor(in Ray ray, uint x, uint y)
 {
-	if (SphereHit(vec3(0, 0, -1), 0.001f, 1000000.0f, 0.5f, ray))
+	if (SphereHit(vec3(0, 0, 0), 0.001f, 50.0f, 0.5f, ray))
 	{
 		return vec3(0, 0, 255);
 	}
@@ -131,5 +138,6 @@ void main()
 
 	Ray ray = GetRay(cameraPos, rayWorldDir);
 
-	outBuffer.data[indexX + (indexY * screenWidth)].color = vec4(GetRayColor(ray, indexX, indexY), 1.0f);
+	uint index = indexX + (indexY * screenWidth);
+	outBuffer.data[index].color = vec4(GetRayColor(ray, indexX, indexY), 1.0f);
 }

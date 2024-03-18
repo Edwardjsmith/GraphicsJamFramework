@@ -42,7 +42,6 @@ void Camera::Update(float delta)
 	m_forward = glm::normalize(m_direction);
 
 	m_projection = glm::perspective(glm::radians(45.0f), static_cast<float>(SCREEN_WIDTH / SCREEN_HEIGHT), 0.1f, 100.0f);
-	//m_projection = glm::ortho(0.0f, (float)SCREEN_WIDTH, (float)SCREEN_HEIGHT, 0.0f);
 	m_view = glm::lookAt(m_position, m_position + m_forward, m_up);
 }
 

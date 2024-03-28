@@ -4,9 +4,9 @@ ProcessState EngineLoop::Init()
 {
     std::string shaderSrc;
 #if RAYTRACER 1
-    shaderSrc = "Shaders/SoftwareRaytracer.shader";
+    shaderSrc = GShaderPath + "SoftwareRaytracer" + GShaderExt;
 #else
-    shaderSrc = "Shaders/SoftwareRasterizer.shader";
+    shaderSrc = GShaderPath + "SoftwareRasterizer" + GShaderExt;
 #endif
 
     if (SDLInit(shaderSrc.c_str()) != ProcessState::OKAY)
@@ -216,12 +216,10 @@ ProcessState EngineLoop::SDLInit(const char* computePath)
         return ProcessState::NOT_OKAY;
     }
 
+    glm::vec3 pos = glm::vec3(0.0f, 0.0f, 0.0f);
+    glm::vec3 target = glm::vec3(0.0f, 0.0f, -1.0f);
 
-    glm::vec3 pos = glm::vec3(-5.0f, -5.0f, -5.0f);
-    glm::vec3 target = glm::vec3(0.0f, 0.0f, 0.0f);
-    glm::vec3 worldUp = glm::vec3(0.0f, 1.0f, 0.0f);
-
-    m_Camera = std::make_unique<Camera>(pos, target, worldUp, 5.0f, 0.0f, 0.0f);
+    m_Camera = std::make_unique<Camera>(pos, target, GWorldUp, 5.0f, 0.0f, 0.0f);
 
     if (m_Camera->InitShader(computePath) != ProcessState::OKAY)
     {

@@ -13,6 +13,30 @@ void ParseSourceFromFilepath(const char* InFilePath, std::string& OutSourceStrin
 
     while (getline(stream, line))
     {
+        if (line.find(GShaderIncludeWildCard) != std::string::npos)
+        {
+            static char delimiters[] = " \n\t";
+            std::string utilShader = "";
+
+            std::string::size_type start = 0;
+            std::string::size_type end = 0;
+
+            start = line.find_first_of(" ", start) + 1;
+            end = line.find_first_of(delimiters, end);
+
+            utilShader = line.substr(start, (end - start));
+
+            std::string outUtilShaderSource;
+            ParseSourceFromFilepath((GShaderPath + utilShader + GShaderUtilExt).c_str(), outUtilShaderSource);
+
+            if (!outUtilShaderSource.empty())
+            {
+                ss << outUtilShaderSource;
+            }
+
+            continue;
+        }
+
         ss << line << '\n';
     }
 

@@ -12,6 +12,11 @@ enum class ProcessState
 	OKAY = 0
 };
 
+static std::string GShaderPath = "Shaders/";
+static std::string GShaderExt = ".shader";
+static std::string GShaderUtilExt = ".shaderutil";
+static std::string GShaderIncludeWildCard = "#include";
+
 class ComputeShader
 {
 public:

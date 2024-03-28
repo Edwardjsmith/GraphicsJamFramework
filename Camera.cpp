@@ -3,20 +3,23 @@
 Camera::Camera(glm::vec3& position, glm::vec3& targetLoc, glm::vec3& worldUp, float speed, float pitch, float yaw)
 {
 	m_position = position;
-	m_direction = glm::normalize(m_position - targetLoc);
+	m_direction = glm::normalize(targetLoc - m_position);
 
 	m_right = glm::normalize(glm::cross(worldUp, m_direction));
-	m_up = glm::cross(m_direction, m_right);
-	m_forward = glm::vec3(0.0f, 0.0f, -1.0f);
+	m_up = glm::normalize(glm::cross(m_direction, m_right));
+	m_forward = glm::normalize(m_direction);
 
 	m_speed = speed;
 
 	m_pitch = pitch;
 	m_yaw = yaw;
 
-	m_view = glm::lookAt(glm::vec3(0.0f, 0.0f, 3.0f),
-		glm::vec3(0.0f, 0.0f, 0.0f),
-		glm::vec3(0.0f, 1.0f, 0.0f));
+	m_view = glm::lookAt(m_position, m_position + m_forward, m_up);
+
+#if RAYTRACER 1
+#else
+	InitRasterObjects();
+#endif
 }
 
 Camera::~Camera()
@@ -39,9 +42,12 @@ void Camera::Update(float delta)
 	m_direction.z = sin(glm::radians(m_yaw)) * cos(glm::radians(m_pitch));
 	m_direction.y = sin(glm::radians(m_pitch));
 
+	m_right = glm::normalize(glm::cross(GWorldUp, m_direction));
+	m_up = glm::normalize(glm::cross(m_direction, m_right));
+
 	m_forward = glm::normalize(m_direction);
 
-	m_projection = glm::perspective(glm::radians(45.0f), static_cast<float>(SCREEN_WIDTH / SCREEN_HEIGHT), 0.1f, 100.0f);
+	m_projection = glm::perspective(glm::radians(60.0f), static_cast<float>(SCREEN_WIDTH / SCREEN_HEIGHT), 0.1f, 10.0f);
 	m_view = glm::lookAt(m_position, m_position + m_forward, m_up);
 }
 
@@ -54,16 +60,21 @@ void Camera::Draw(float delta)
 	{
 		m_ComputeShader->Use();
 
-		m_ComputeShader->SetVec3("cameraPos", m_position);
 		m_ComputeShader->SetInt("screenWidth", SCREEN_WIDTH);
 		m_ComputeShader->SetInt("screenHeight", SCREEN_HEIGHT);
 
 #if RAYTRACER 1
+		m_ComputeShader->SetVec3("cameraPos", m_position);
 		m_ComputeShader->SetMatrix("inverseProjection", glm::inverse(m_projection));
 		m_ComputeShader->SetMatrix("inverseView", glm::inverse(m_view));
 #else
-		m_ComputeShader->SetMatrix("Projection", m_projection);
-		m_ComputeShader->SetMatrix("View", m_view);
+		m_ComputeShader->SetMatrix("ProjectionView", m_projection * m_view);
+
+		for (int i = 0; i < m_ObjectTransforms.size(); ++i)
+		{
+			std::string uniformName = "objectTransform[" + std::to_string(i) + "]";
+			m_ComputeShader->SetMatrix(uniformName, m_ObjectTransforms[i]);
+		}
 #endif
 
 
@@ -84,6 +95,13 @@ glm::vec3 Camera::GetPosition() const
 void Camera::SetPosition(glm::vec3& newPosition)
 {
 	m_position = newPosition;
+
+	//std::string cameraPosStr = "Camera pos: X " +
+	//	std::to_string(m_position.x) + 
+	//	", Y " + std::to_string(m_position.y) + 
+	//	", Z " + std::to_string(m_position.z);
+
+	//printf(cameraPosStr.c_str());
 }
 
 glm::vec3 Camera::GetCameraForward() const
@@ -155,7 +173,26 @@ ProcessState Camera::InitShader(const char* path)
 	return ProcessState::OKAY;
 }
 
-const void* Camera::GetPixelData()
+const void* Camera::GetPixelData() const
 {
 	return &m_PixelData;
 }
+
+
+void Camera::InitRasterObjects()
+{
+	const glm::mat4 identity(1.0f);
+
+	glm::mat4 Model0 = glm::translate(identity, glm::vec3(0.0f, 0.0f, -1.0f));
+	Model0 = glm::rotate(Model0, glm::radians(45.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+	m_ObjectTransforms.push_back(Model0);
+
+	glm::mat4 Model1 = glm::translate(identity, glm::vec3(-5.0, 0.0f, -2.0f));
+	Model1 = glm::rotate(Model1, glm::radians(30.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+	m_ObjectTransforms.push_back(Model1);
+
+	glm::mat4 Model2 = glm::translate(identity, glm::vec3(5.0, 0.0f, -3.0f));
+	Model2 = glm::rotate(Model2, glm::radians(60.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+	m_ObjectTransforms.push_back(Model2);
+}
+

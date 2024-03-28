@@ -15,6 +15,8 @@ struct PixelData
 	glm::vec4 color;
 };
 
+static glm::vec3 GWorldUp = glm::vec3(0.0f, 1.0f, 0.0f);
+
 class Camera
 {
 public:
@@ -44,7 +46,7 @@ public:
 
 	ProcessState InitShader(const char* path);
 
-	const void* GetPixelData();
+	const void* GetPixelData() const;
 
 private:
 
@@ -68,5 +70,8 @@ private:
 
 	GLuint m_pixelBuffer = 0;
 	GLuint m_DepthBuffer = 0;
+
+	void InitRasterObjects();
+	std::vector<glm::mat4> m_ObjectTransforms;
 };
 

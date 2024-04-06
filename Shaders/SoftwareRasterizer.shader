@@ -13,12 +13,6 @@ struct VertexData
 	vec3 norm;
 };
 
-struct Mesh
-{
-	int indexOffset;
-	int indexCount;
-};
-
 layout(binding = 0) buffer pixel
 {
 	PixelData data[];
@@ -52,7 +46,7 @@ void main()
 	vec3 samp = vec3(indexX, indexY, 1.0f);
 
 	uint index = indexX + (indexY * screenWidth);
-	depthBuffer.data[index] = 0.0f;
+	depthBuffer.data[index] = 100000000000000.0f;
 	pixelDataBuffer.data[index].color = black;
 	
 	uint indicesLen = indexBuffer.data.length() / 3;
@@ -84,27 +78,20 @@ void main()
 			continue;
 		}
 
+		vec3 depthConst = model * vec3(1.0f);
+		float depth = (depthConst.x * samp.x) + (depthConst.y * samp.y) + depthConst.z;
+
+		if (depth >= depthBuffer.data[index])
+		{
+			continue;
+		}
+
+		model *= identity;
 		model = inverse(model);
 
 		vec3 E0 = model[0] / (abs(model[0].x) + abs(model[0].y));
 		vec3 E1 = model[1] / (abs(model[1].x) + abs(model[1].y));
 		vec3 E2 = model[2] / (abs(model[2].x) + abs(model[2].y));
-
-		vec3 depthConst = model * vec3(1);
-
-		float oneOverW = (depthConst.x * samp.x) + (depthConst.y * samp.y) + depthConst.z;
-		vec3 Z = model * vec3(v0Clip.z, v1Clip.z, v2Clip.z);
-
-		float w = 1.0f / oneOverW;
-		float zOverW = (Z.x * samp.x) + (Z.y + samp.y) + Z.z;
-
-		float depth = zOverW * w;
-		model *= identity;
-
-		if (depth <= depthBuffer.data[index])
-		{
-			continue;
-		}
 
 		bool alpha = EvaluateEdgeFunction(E0, samp.xy);
 		bool beta = EvaluateEdgeFunction(E1, samp.xy);

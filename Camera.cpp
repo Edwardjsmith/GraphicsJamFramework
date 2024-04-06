@@ -162,7 +162,7 @@ ProcessState Camera::InitShader(const char* path)
 
 	glGenBuffers(1, &m_DepthBuffer);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, m_DepthBuffer);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(m_DepthBuffer), 0, GL_DYNAMIC_DRAW);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(float) * (SCREEN_WIDTH * SCREEN_HEIGHT), 0, GL_DYNAMIC_DRAW);
 
 	glGenBuffers(1, &m_VertexBuffer);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, m_VertexBuffer);

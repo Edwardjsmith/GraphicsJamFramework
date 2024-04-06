@@ -50,9 +50,6 @@ ProcessState EngineLoop::Init()
     glDebugMessageControl(
         GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, true
     );
-
-    glEnable(GL_DEPTH_TEST);
-
     return ProcessState::OKAY;
 }
 
@@ -131,7 +128,7 @@ ProcessState EngineLoop::Update(float delta)
         const glm::vec3& cameraRight = m_Camera->GetCameraRight();
         const float cameraSpeed = m_Camera->GetCameraSpeed() * delta;
 
-        glm::vec3 newPos = glm::vec3(0);
+        glm::vec3 newPos = cameraPos;
 
         switch (SDLEvent.type)
         {
@@ -195,7 +192,7 @@ ProcessState EngineLoop::Update(float delta)
             }
         }
 
-        float offsetX, offsetY;
+        float offsetX = 0, offsetY = 0;
         HandleMouseMovement(offsetX, offsetY);
 
         m_Camera->SetYaw(m_Camera->GetYaw() + offsetX);
@@ -264,8 +261,6 @@ ProcessState EngineLoop::SDLInit(const char* computePath)
     {
         return ProcessState::NOT_OKAY;
     }
-
-    SDL_SetRelativeMouseMode(SDL_TRUE);
 
     return ProcessState::OKAY;
 }

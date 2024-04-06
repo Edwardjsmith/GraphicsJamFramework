@@ -26,6 +26,9 @@ private:
 	ProcessState SDLInit(const char* computePath);
 	void SDLCleanup();
 
+	//Asset loading
+	ProcessState LoadAssets(const char* pathName);
+
 //OpenGL context
 	SDL_GLContext context = nullptr;
 

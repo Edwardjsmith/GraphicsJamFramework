@@ -70,6 +70,8 @@ public:
 		glUniformMatrix4fv(matLoc, 1, GL_FALSE, glm::value_ptr(mat));
 	}
 
+	unsigned int GetID() const { return ID; }
+
 private:
 
 	unsigned int ID = 0;

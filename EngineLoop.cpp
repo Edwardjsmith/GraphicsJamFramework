@@ -1,5 +1,29 @@
 #include "EngineLoop.h"
 
+#define TINYOBJLOADER_IMPLEMENTATION
+#include "tiny_obj_loader.h"
+
+static const char* GAssetPath = "Assets/Teapot/teapot.obj";
+
+static void APIENTRY OpenglCallbackFunction(
+    GLenum source,
+    GLenum type,
+    GLuint id,
+    GLenum severity,
+    GLsizei length,
+    const GLchar* message,
+    const void* userParam)
+{
+    fprintf(stderr, "%s\n", message);
+
+    if (severity == GL_DEBUG_SEVERITY_HIGH)
+    {
+        fprintf(stderr, "Aborting...\n");
+        abort();
+    }
+}
+
+
 ProcessState EngineLoop::Init()
 {
     std::string shaderSrc;
@@ -7,12 +31,27 @@ ProcessState EngineLoop::Init()
     shaderSrc = GShaderPath + "SoftwareRaytracer" + GShaderExt;
 #else
     shaderSrc = GShaderPath + "SoftwareRasterizer" + GShaderExt;
+
+    if (LoadAssets(GAssetPath) != ProcessState::OKAY)
+    {
+        return ProcessState::NOT_OKAY;
+    }
 #endif
 
     if (SDLInit(shaderSrc.c_str()) != ProcessState::OKAY)
     {
         return ProcessState::NOT_OKAY;
     }
+
+    // Enable the debug callback
+    glEnable(GL_DEBUG_OUTPUT);
+    glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+    glDebugMessageCallback(OpenglCallbackFunction, nullptr);
+    glDebugMessageControl(
+        GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, true
+    );
+
+    glEnable(GL_DEPTH_TEST);
 
     return ProcessState::OKAY;
 }
@@ -239,4 +278,114 @@ void EngineLoop::SDLCleanup()
     SDL_GL_DeleteContext(context);
 
     SDL_Quit();
+}
+
+extern std::vector<VertexInput> GVertexData;
+extern std::vector<uint32_t> GIndexData;
+
+ProcessState EngineLoop::LoadAssets(const char* pathName)
+{
+    tinyobj::attrib_t attribs;
+    std::vector<tinyobj::shape_t> shapes;
+    std::vector<tinyobj::material_t> materials;
+    std::string err = "";
+
+    bool ret = tinyobj::LoadObj(&attribs, &shapes, &materials, nullptr, &err, GAssetPath, "../Assets/", true /*triangulate*/, true /*default_vcols_fallback*/);
+    if (ret)
+    {
+        // Process vertices
+        {
+            // POD of indices of vertex data provided by tinyobjloader, used to map unique vertex data to indexed primitive
+            struct IndexedPrimitive
+            {
+                uint32_t PosIdx;
+                uint32_t NormalIdx;
+                uint32_t UVIdx;
+
+                bool operator<(const IndexedPrimitive& other) const
+                {
+                    return memcmp(this, &other, sizeof(IndexedPrimitive)) > 0;
+                }
+            };
+
+            std::map<IndexedPrimitive, uint32_t> indexedPrims;
+            for (size_t s = 0; s < shapes.size(); s++)
+            {
+                const tinyobj::shape_t& shape = shapes[s];
+
+                uint32_t meshIdxBase = GIndexData.size();
+                for (size_t i = 0; i < shape.mesh.indices.size(); i++)
+                {
+                    auto index = shape.mesh.indices[i];
+
+                    // Fetch indices to construct an IndexedPrimitive to first look up existing unique vertices
+                    int vtxIdx = index.vertex_index;
+                    assert(vtxIdx != -1);
+
+                    bool hasNormals = index.normal_index != -1;
+                    bool hasUV = index.texcoord_index != -1;
+
+                    int normalIdx = index.normal_index;
+                    int uvIdx = index.texcoord_index;
+
+                    IndexedPrimitive prim;
+                    prim.PosIdx = vtxIdx;
+                    prim.NormalIdx = hasNormals ? normalIdx : UINT32_MAX;
+                    prim.UVIdx = hasUV ? uvIdx : UINT32_MAX;
+
+                    auto res = indexedPrims.find(prim);
+                    if (res != indexedPrims.end())
+                    {
+                        // Vertex is already defined in terms of POS/NORMAL/UV indices, just append index data to index buffer
+                        GIndexData.push_back(res->second);
+                    }
+                    else
+                    {
+                        // New unique vertex found, get vertex data and append it to vertex buffer and update indexed primitives
+                        auto newIdx = GVertexData.size();
+                        indexedPrims[prim] = newIdx;
+                        GIndexData.push_back(newIdx);
+
+                        auto vx = attribs.vertices[3 * index.vertex_index];
+                        auto vy = attribs.vertices[3 * index.vertex_index + 1];
+                        auto vz = attribs.vertices[3 * index.vertex_index + 2];
+
+                        glm::vec3 pos(vx, vy, vz);
+
+                        glm::vec3 normal(0.f);
+                        if (hasNormals)
+                        {
+                            auto nx = attribs.normals[3 * index.normal_index];
+                            auto ny = attribs.normals[3 * index.normal_index + 1];
+                            auto nz = attribs.normals[3 * index.normal_index + 2];
+
+                            normal.x = nx;
+                            normal.y = ny;
+                            normal.z = nz;
+                        }
+
+                        glm::vec2 uv(0.f);
+                        if (hasUV)
+                        {
+                            auto ux = attribs.texcoords[2 * index.texcoord_index];
+                            auto uy = 1.f - attribs.texcoords[2 * index.texcoord_index + 1];
+
+                            uv.s = glm::abs(ux);
+                            uv.t = glm::abs(uy);
+                        }
+
+                        VertexInput uniqueVertex = { pos, normal, uv };
+                        GVertexData.push_back(uniqueVertex);
+                    }
+                }
+            }
+        }
+
+        return ProcessState::OKAY;
+    }
+    else
+    {
+        printf("ERROR: %s\n", err.c_str());
+        return ProcessState::NOT_OKAY;
+    }
 }

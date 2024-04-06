@@ -1,4 +1,7 @@
-#include "Camera.h"
+﻿#include "Camera.h"
+
+std::vector<VertexInput> GVertexData;
+std::vector<uint32_t> GIndexData;
 
 Camera::Camera(glm::vec3& position, glm::vec3& targetLoc, glm::vec3& worldUp, float speed, float pitch, float yaw)
 {
@@ -16,10 +19,7 @@ Camera::Camera(glm::vec3& position, glm::vec3& targetLoc, glm::vec3& worldUp, fl
 
 	m_view = glm::lookAt(m_position, m_position + m_forward, m_up);
 
-#if RAYTRACER 1
-#else
 	InitRasterObjects();
-#endif
 }
 
 Camera::~Camera()
@@ -63,27 +63,29 @@ void Camera::Draw(float delta)
 		m_ComputeShader->SetInt("screenWidth", SCREEN_WIDTH);
 		m_ComputeShader->SetInt("screenHeight", SCREEN_HEIGHT);
 
+		const unsigned int programID = m_ComputeShader->GetID();
+
+		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, m_PixelBuffer);
+
 #if RAYTRACER 1
 		m_ComputeShader->SetVec3("cameraPos", m_position);
 		m_ComputeShader->SetMatrix("inverseProjection", glm::inverse(m_projection));
 		m_ComputeShader->SetMatrix("inverseView", glm::inverse(m_view));
 #else
 		m_ComputeShader->SetMatrix("ProjectionView", m_projection * m_view);
+		m_ComputeShader->SetMatrix("Transform", m_ObjectTransforms[0]);
 
-		for (int i = 0; i < m_ObjectTransforms.size(); ++i)
-		{
-			std::string uniformName = "objectTransform[" + std::to_string(i) + "]";
-			m_ComputeShader->SetMatrix(uniformName, m_ObjectTransforms[i]);
-		}
+		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, m_DepthBuffer);
+		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, m_VertexBuffer);
+		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, m_IndexBuffer);
 #endif
 
-
-		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, m_pixelBuffer);
 		glDispatchCompute(GDispatchX, GDispatchY, 1);
 		glMemoryBarrier(GL_ALL_BARRIER_BITS);
-		glGetBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(m_PixelData), (GLvoid*)m_PixelData);
 
-		glDrawElements(GL_TRIANGLES, 0, 0, 0);
+		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, m_PixelBuffer);
+		glGetBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(m_PixelData), (GLvoid*)m_PixelData);
+		glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 	}
 }
 
@@ -95,13 +97,6 @@ glm::vec3 Camera::GetPosition() const
 void Camera::SetPosition(glm::vec3& newPosition)
 {
 	m_position = newPosition;
-
-	//std::string cameraPosStr = "Camera pos: X " +
-	//	std::to_string(m_position.x) + 
-	//	", Y " + std::to_string(m_position.y) + 
-	//	", Z " + std::to_string(m_position.z);
-
-	//printf(cameraPosStr.c_str());
 }
 
 glm::vec3 Camera::GetCameraForward() const
@@ -158,17 +153,27 @@ ProcessState Camera::InitShader(const char* path)
 		return ProcessState::NOT_OKAY;
 	}
 
-	glGenBuffers(1, &m_pixelBuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, m_pixelBuffer);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(m_PixelData), 0, GL_DYNAMIC_DRAW);
+	glGenBuffers(1, &m_PixelBuffer);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, m_PixelBuffer);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(m_PixelData), 0, GL_DYNAMIC_DRAW);
 
-#if RAYTRACER 0
+#if RAYTRACER 1
+#else
+
 	glGenBuffers(1, &m_DepthBuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, m_DepthBuffer);
-	glBufferData(GL_ARRAY_BUFFER, (SCREEN_WIDTH * SCREEN_HEIGHT) * sizeof(float), 0, GL_DYNAMIC_DRAW);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, m_DepthBuffer);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(m_DepthBuffer), 0, GL_DYNAMIC_DRAW);
+
+	glGenBuffers(1, &m_VertexBuffer);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, m_VertexBuffer);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(VertexInput) * GVertexData.size(), GVertexData.data(), GL_DYNAMIC_DRAW);
+
+	glGenBuffers(1, &m_IndexBuffer);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, m_IndexBuffer);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(int) * GIndexData.size(), GIndexData.data(), GL_DYNAMIC_DRAW);
 #endif
 
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
 	return ProcessState::OKAY;
 }

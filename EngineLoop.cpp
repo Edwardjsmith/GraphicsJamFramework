@@ -3,7 +3,7 @@
 #define TINYOBJLOADER_IMPLEMENTATION
 #include "tiny_obj_loader.h"
 
-static const char* GAssetPath = "Assets/Teapot/teapot.obj";
+static const char* GAssetPath = "Assets/Cube/cube.obj";
 
 static void APIENTRY OpenglCallbackFunction(
     GLenum source,
@@ -43,13 +43,13 @@ ProcessState EngineLoop::Init()
         return ProcessState::NOT_OKAY;
     }
 
-    // Enable the debug callback
-    glEnable(GL_DEBUG_OUTPUT);
-    glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
-    glDebugMessageCallback(OpenglCallbackFunction, nullptr);
-    glDebugMessageControl(
-        GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, true
-    );
+    //// Enable the debug callback
+    //glEnable(GL_DEBUG_OUTPUT);
+    //glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+    //glDebugMessageCallback(OpenglCallbackFunction, nullptr);
+    //glDebugMessageControl(
+    //    GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, true
+    //);
     return ProcessState::OKAY;
 }
 
@@ -66,7 +66,7 @@ ProcessState EngineLoop::Draw()
         return ProcessState::NOT_OKAY;
     }
 
-    m_Camera->Draw(0.0f);
+    m_Camera->Draw();
 
     if (m_SDLWindow && m_mainSurface)
     {
@@ -80,18 +80,31 @@ ProcessState EngineLoop::Draw()
         {
             for (int j = 0; j < SCREEN_HEIGHT; ++j)
             {
-                const PixelData& data = static_cast<const PixelData*>(pixelData)[i + (j * SCREEN_WIDTH)];
+                const int index = i + (j * SCREEN_WIDTH);
+                const PixelData& data = static_cast<const PixelData*>(pixelData)[index];
 
-                const Uint8 r = static_cast<Uint8>(data.color.r);
-                const Uint8 g = static_cast<Uint8>(data.color.g);
-                const Uint8 b = static_cast<Uint8>(data.color.b);
+                if (data.color == glm::vec4(0))
+                {
+                    float colourX = (i / (SCREEN_WIDTH * 2.0f)) * 255.0f;
+                    float colourY = (j / (SCREEN_HEIGHT * 2.0f)) * 255.0f;
 
-                pixels[i + (j * SCREEN_WIDTH)] = SDL_MapRGB(m_mainSurface->format, r, g, b);
+                    pixels[index] = SDL_MapRGB(m_mainSurface->format, colourX, colourY, 0.0f);
+                }
+                else
+                {
+                    const Uint8 r = static_cast<Uint8>(data.color.r);
+                    const Uint8 g = static_cast<Uint8>(data.color.g);
+                    const Uint8 b = static_cast<Uint8>(data.color.b);
+
+                    pixels[index] = SDL_MapRGB(m_mainSurface->format, r, g, b);
+                }
             }
         }
 
         SDL_UnlockSurface(m_mainSurface);
         SDL_UpdateWindowSurface(m_SDLWindow);
+
+        m_Camera->ResetPixelData();
     }
     else
     {
@@ -275,8 +288,12 @@ void EngineLoop::SDLCleanup()
     SDL_Quit();
 }
 
+#if RAYTRACER 1
+#else
 extern std::vector<VertexInput> GVertexData;
 extern std::vector<uint32_t> GIndexData;
+
+extern int GDispatchX, GDispatchY;
 
 ProcessState EngineLoop::LoadAssets(const char* pathName)
 {
@@ -376,6 +393,9 @@ ProcessState EngineLoop::LoadAssets(const char* pathName)
             }
         }
 
+        GDispatchX = SCREEN_WIDTH / 16;//((GIndexData.size()) / 3);
+        GDispatchY = SCREEN_HEIGHT / 16;
+
         return ProcessState::OKAY;
     }
     else
@@ -384,3 +404,5 @@ ProcessState EngineLoop::LoadAssets(const char* pathName)
         return ProcessState::NOT_OKAY;
     }
 }
+
+#endif

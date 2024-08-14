@@ -1,6 +1,6 @@
 #include Triangle
 
-uniform mat4 ProjectionView;
+uniform mat4 ProjectionViewModel;
 
 uniform vec3 cameraPos;
 
@@ -17,12 +17,6 @@ mat3 identity =
 	{0.0f, 0.0f, 1.0f },
 };
 
-
-vec4 ProjectVerts(in vec3 vertPos, in mat4 model)
-{
-	return (ProjectionView * model * vec4(vertPos, 1.0f));
-}
-
 vec4 ToRaster(in vec4 NDC)
 {
 	return vec4(((NDC.x + NDC.w) * 0.5f) * screenWidth, ((NDC.w - NDC.y) * 0.5f) * screenHeight, NDC.z, NDC.w);
@@ -33,35 +27,8 @@ vec3 ToRaster2D(in vec3 NDC)
 	return vec3(((NDC.x + 1.0f) * 0.5f) * screenWidth, ((NDC.y + 1.0f) * 0.5f) * screenHeight, NDC.z);
 }
 
-void ProjectTriangle(in Triangle triangle, in mat4 model, out vec4 left, out vec4 right, out vec4 top)
-{
-	vec4 leftLocalToWorld = model * vec4(triangle.vertices[0], 1.0f);
-	vec4 rightLocalToWorld = model * vec4(triangle.vertices[1], 1.0f);
-	vec4 topLocalToWorld = model * vec4(triangle.vertices[2], 1.0f);
-
-	//Project triangle vertices
-	left = ProjectionView * leftLocalToWorld;
-	right = ProjectionView * rightLocalToWorld;
-	top = ProjectionView * topLocalToWorld;
-
-	left.xyz /= left.w;
-	right.xyz /= right.w;
-	top.xyz /= top.w;
-
-	//init box coords with projected coords
-	triangle.boxCoords[0] = left.xy;
-	triangle.boxCoords[1] = vec2(left.x, top.y);
-	triangle.boxCoords[2] = vec2(right.x, top.y);
-	triangle.boxCoords[3] = right.xy;
-}
-
 float Determinant3X3(in mat3 mat)
 {
 	return (mat[0].x * mat[1].y * mat[2].z) + (mat[1].x * mat[2].y * mat[0].z) + (mat[2].x * mat[0].y * mat[1].z)
 		- (mat[2].x * mat[1].y * mat[0].z) - (mat[1].x * mat[0].y * mat[2].z) - (mat[0].x * mat[2].y * mat[1].z);
-}
-
-float ComputeDepth()
-{
-	return 0.0f;
 }

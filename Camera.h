@@ -10,17 +10,28 @@
 const unsigned int SCREEN_WIDTH = 640;
 const unsigned int SCREEN_HEIGHT = 480;
 
+#if RAYTRACER 1
+#else
 struct VertexInput
 {
 	glm::vec3   Pos;
 	glm::vec3   Normal;
-	glm::vec2	uv;
+	glm::vec2	UV;
 };
+
 extern std::vector<VertexInput> GVertexData;
 extern std::vector<uint32_t> GIndexData;
 
+extern int GDispatchX, GDispatchY;
+#endif
+
 struct PixelData
 {
+	PixelData()
+	{
+		color = glm::vec4(0);
+	}
+
 	glm::vec4 color;
 };
 
@@ -34,7 +45,7 @@ public:
 	~Camera();
 
 	void Update(float delta);
-	void Draw(float delta);
+	void Draw();
 
 	glm::vec3 GetPosition() const;
 	void SetPosition(glm::vec3& newPosition);
@@ -57,6 +68,8 @@ public:
 
 	const void* GetPixelData() const;
 
+	void ResetPixelData();
+
 private:
 
 	glm::vec3 m_position;
@@ -78,11 +91,13 @@ private:
 	PixelData m_PixelData[SCREEN_WIDTH * SCREEN_HEIGHT];
 
 	GLuint m_PixelBuffer = 0;
+#if RAYTRACER 1
+#else
 	GLuint m_DepthBuffer = 0;
 	GLuint m_VertexBuffer = 0;
 	GLuint m_IndexBuffer = 0;
+#endif
 
-	void InitRasterObjects();
-	std::vector<glm::mat4> m_ObjectTransforms;
+	glm::mat4 m_ObjTransform = glm::mat4(1.0f);
 };
 

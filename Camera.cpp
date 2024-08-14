@@ -1,8 +1,5 @@
 ﻿#include "Camera.h"
 
-std::vector<VertexInput> GVertexData;
-std::vector<uint32_t> GIndexData;
-
 Camera::Camera(glm::vec3& position, glm::vec3& targetLoc, glm::vec3& worldUp, float speed, float pitch, float yaw)
 {
 	m_position = position;
@@ -18,8 +15,6 @@ Camera::Camera(glm::vec3& position, glm::vec3& targetLoc, glm::vec3& worldUp, fl
 	m_yaw = yaw;
 
 	m_view = glm::lookAt(m_position, m_position + m_forward, m_up);
-
-	InitRasterObjects();
 }
 
 Camera::~Camera()
@@ -49,12 +44,23 @@ void Camera::Update(float delta)
 
 	m_projection = glm::perspective(glm::radians(60.0f), static_cast<float>(SCREEN_WIDTH / SCREEN_HEIGHT), 0.1f, 10.0f);
 	m_view = glm::lookAt(m_position, m_position + m_forward, m_up);
+
+	m_ObjTransform = glm::rotate(m_ObjTransform, delta, glm::vec3(0.0f, 1.0f, 0.0f));
 }
 
+#if RAYTRACER 1
 const int GDispatchX = SCREEN_WIDTH / 16;
 const int GDispatchY = SCREEN_HEIGHT / 16;
+#else
 
-void Camera::Draw(float delta)
+int GDispatchX = 0;
+int GDispatchY = 0;
+
+std::vector<VertexInput> GVertexData;
+std::vector<uint32_t> GIndexData;
+#endif
+
+void Camera::Draw()
 {
 	if (m_ComputeShader) 
 	{
@@ -72,8 +78,7 @@ void Camera::Draw(float delta)
 		m_ComputeShader->SetMatrix("inverseProjection", glm::inverse(m_projection));
 		m_ComputeShader->SetMatrix("inverseView", glm::inverse(m_view));
 #else
-		m_ComputeShader->SetMatrix("ProjectionView", m_projection * m_view);
-		m_ComputeShader->SetMatrix("Transform", m_ObjectTransforms[0]);
+		m_ComputeShader->SetMatrix("ProjectionViewModel", m_projection * m_view * m_ObjTransform);
 
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, m_DepthBuffer);
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, m_VertexBuffer);
@@ -183,21 +188,9 @@ const void* Camera::GetPixelData() const
 	return &m_PixelData;
 }
 
-
-void Camera::InitRasterObjects()
+void Camera::ResetPixelData()
 {
-	const glm::mat4 identity(1.0f);
-
-	glm::mat4 Model0 = glm::translate(identity, glm::vec3(0.0f, 0.0f, -1.0f));
-	Model0 = glm::rotate(Model0, glm::radians(45.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-	m_ObjectTransforms.push_back(Model0);
-
-	glm::mat4 Model1 = glm::translate(identity, glm::vec3(-5.0, 0.0f, -2.0f));
-	Model1 = glm::rotate(Model1, glm::radians(30.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-	m_ObjectTransforms.push_back(Model1);
-
-	glm::mat4 Model2 = glm::translate(identity, glm::vec3(5.0, 0.0f, -3.0f));
-	Model2 = glm::rotate(Model2, glm::radians(60.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-	m_ObjectTransforms.push_back(Model2);
+	std::fill(std::begin(m_PixelData), std::end(m_PixelData), PixelData());
 }
+
 

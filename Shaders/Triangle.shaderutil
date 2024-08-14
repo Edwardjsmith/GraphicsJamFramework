@@ -11,16 +11,6 @@ void BuildTriangle(inout Triangle triangle, in vec3 left, in vec3 right, in vec3
 	triangle.vertices[2] = top;
 }
 
-float edgeFunc(in vec3 a, in vec3 b, in vec3 c)
-{
-	return ((c.x - a.x) * (b.y - a.y) - (c.y - a.y) * (b.x - a.x));
-}
-
-bool PixelInsideTriangle(in vec3 left, in vec3 right, in vec3 top, in vec3 pixelCoords)
-{
-	return edgeFunc(left, right, pixelCoords) > 0.0f && edgeFunc(right, top, pixelCoords) > 0.0f && edgeFunc(top, left, pixelCoords) > 0.0f;
-}
-
 bool EvaluateEdgeFunction(in vec3 E, in vec2 samp)
 {
 	// Interpolate edge function at given sample
@@ -35,6 +25,11 @@ bool EvaluateEdgeFunction(in vec3 E, in vec2 samp)
 
 	if ((E.x == 0.0f) && (E.y < 0.0f)) return false;
 	else return true;
+}
+
+bool PixelInsideTriangle(in vec3 left, in vec3 right, in vec3 top, in vec3 pixelCoords)
+{
+	return EvaluateEdgeFunction(left, pixelCoords.xy) && EvaluateEdgeFunction(right, pixelCoords.xy) && EvaluateEdgeFunction(top, pixelCoords.xy);
 }
 
 vec3 vertices[] =

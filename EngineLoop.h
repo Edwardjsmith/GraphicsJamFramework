@@ -26,8 +26,11 @@ private:
 	ProcessState SDLInit(const char* computePath);
 	void SDLCleanup();
 
+#if RAYTRACER 1
+#else
 	//Asset loading
 	ProcessState LoadAssets(const char* pathName);
+#endif
 
 //OpenGL context
 	SDL_GLContext context = nullptr;

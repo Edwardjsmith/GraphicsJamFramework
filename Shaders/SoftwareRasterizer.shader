@@ -33,8 +33,6 @@ layout(binding = 3) buffer index
 	int data[];
 } indexBuffer;
 
-uniform mat4 Transform;
-
 vec4 black = vec4(0);
 
 layout(local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
@@ -48,7 +46,7 @@ void main()
 	uint index = indexX + (indexY * screenWidth);
 	depthBuffer.data[index] = 100000000000000.0f;
 	pixelDataBuffer.data[index].color = black;
-	
+
 	uint indicesLen = indexBuffer.data.length() / 3;
 
 	for (uint j = 0; j < indicesLen; ++j)
@@ -56,9 +54,9 @@ void main()
 		uint indicesIndex = j * 3;
 
 		//From NDC to clip
-		vec4 v0Clip = ProjectionView * Transform * vec4(vertexBuffer.data[indexBuffer.data[indicesIndex]].pos, 1.0f);
-		vec4 v1Clip = ProjectionView * Transform * vec4(vertexBuffer.data[indexBuffer.data[indicesIndex + 1]].pos, 1.0f);
-		vec4 v2Clip = ProjectionView * Transform * vec4(vertexBuffer.data[indexBuffer.data[indicesIndex + 2]].pos, 1.0f);
+		vec4 v0Clip = ProjectionViewModel * vec4(vertexBuffer.data[indexBuffer.data[indicesIndex]].pos, 1.0f);
+		vec4 v1Clip = ProjectionViewModel * vec4(vertexBuffer.data[indexBuffer.data[indicesIndex + 1]].pos, 1.0f);
+		vec4 v2Clip = ProjectionViewModel * vec4(vertexBuffer.data[indexBuffer.data[indicesIndex + 2]].pos, 1.0f);
 
 		//Clip to raster
 		vec4 v0Raster = ToRaster(v0Clip);
@@ -93,22 +91,10 @@ void main()
 		vec3 E1 = model[1] / (abs(model[1].x) + abs(model[1].y));
 		vec3 E2 = model[2] / (abs(model[2].x) + abs(model[2].y));
 
-		bool alpha = EvaluateEdgeFunction(E0, samp.xy);
-		bool beta = EvaluateEdgeFunction(E1, samp.xy);
-		bool gamma = EvaluateEdgeFunction(E2, samp.xy);
-
-		if (alpha && beta && gamma)
+		if (PixelInsideTriangle(E0, E1, E2, samp))
 		{
 			pixelDataBuffer.data[index].color = vec4(vertexBuffer.data[indexBuffer.data[indicesIndex]].norm * vec3(0.5f) + vec3(0.5f), 1.0f) * 255;
 			depthBuffer.data[index] = depth;
 		}
-	}
-
-	if(pixelDataBuffer.data[index].color == black)
-	{
-		float colourX = (indexX / (screenWidth * 2.0f)) * 255.0f;
-		float colourY = (indexY / (screenHeight * 2.0f)) * 255.0f;
-
-		pixelDataBuffer.data[index].color = vec4(vec3(colourX, colourY, 0), 1.0f);
 	}
 }

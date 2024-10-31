@@ -7,31 +7,30 @@ struct PixelData
 	vec4 color;
 };
 
-struct VertexData
+struct TriangleData
 {
-	vec3 pos;
-	vec3 norm;
+	VertexData[3] vertexData;
 };
 
-layout(binding = 0) buffer pixel
-{
-	PixelData data[];
-} pixelDataBuffer;
-
-layout(binding = 1) buffer depth
+layout(binding = 0) buffer depth
 {
 	float data[];
 } depthBuffer;
 
-layout(binding = 2) buffer vertex
+layout(binding = 1) buffer vertex
 {
 	VertexData data[];
 } vertexBuffer;
 
-layout(binding = 3) buffer index
+layout(binding = 2) buffer index
 {
 	int data[];
 } indexBuffer;
+
+layout(binding = 3) buffer pixel
+{
+	PixelData data[];
+} pixelDataBuffer;
 
 vec4 black = vec4(0);
 

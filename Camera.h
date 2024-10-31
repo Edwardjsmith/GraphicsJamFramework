@@ -21,6 +21,7 @@ struct VertexInput
 
 extern std::vector<VertexInput> GVertexData;
 extern std::vector<uint32_t> GIndexData;
+extern std::vector<int> GVisibleIndexData;
 
 extern int GDispatchX, GDispatchY;
 #endif
@@ -64,11 +65,15 @@ public:
 	float GetYaw() const;
 	void SetYaw(float yaw);
 
-	ProcessState InitShader(const char* path);
+	ProcessState InitShader(const char* path, int index);
 
 	const void* GetPixelData() const;
 
 	void ResetPixelData();
+
+	ProcessState InitRasterShader(const char* path);
+
+	ProcessState InitTriangleFilterShader(const char* path);
 
 private:
 
@@ -86,16 +91,12 @@ private:
 
 	float m_pitch, m_yaw;
 
-	std::unique_ptr<ComputeShader> m_ComputeShader = nullptr;
+	std::unique_ptr<ComputeShader> m_ComputeShader[2] = { nullptr, nullptr };
 
 	PixelData m_PixelData[SCREEN_WIDTH * SCREEN_HEIGHT];
 
-	GLuint m_PixelBuffer = 0;
 #if RAYTRACER 1
 #else
-	GLuint m_DepthBuffer = 0;
-	GLuint m_VertexBuffer = 0;
-	GLuint m_IndexBuffer = 0;
 #endif
 
 	glm::mat4 m_ObjTransform = glm::mat4(1.0f);

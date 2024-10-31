@@ -10,6 +10,12 @@ uniform int screenHeight = 480;
 float halfScreenHeight = screenHeight * 0.5f;
 float halfScreenWidth = screenWidth * 0.5f;
 
+struct VertexData
+{
+	vec3 pos;
+	vec3 norm;
+};
+
 mat3 identity =
 {
 	{1.0f, 0.0f, 0.0f },

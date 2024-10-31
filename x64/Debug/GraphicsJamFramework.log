@@ -1,23 +1,13 @@
-﻿  EngineLoop.cpp
+﻿  Camera.cpp
 C:\Users\edwar\Documents\GitHub\GraphicsJamFramework\GraphicsJamFramework\Camera.h(13,5): warning C4067: unexpected tokens following preprocessor directive - expected a newline
-  (compiling source file 'EngineLoop.cpp')
+  (compiling source file 'Camera.cpp')
   
-C:\Users\edwar\Documents\GitHub\GraphicsJamFramework\GraphicsJamFramework\Camera.h(94,5): warning C4067: unexpected tokens following preprocessor directive - expected a newline
-  (compiling source file 'EngineLoop.cpp')
+C:\Users\edwar\Documents\GitHub\GraphicsJamFramework\GraphicsJamFramework\Camera.h(98,5): warning C4067: unexpected tokens following preprocessor directive - expected a newline
+  (compiling source file 'Camera.cpp')
   
-C:\Users\edwar\Documents\GitHub\GraphicsJamFramework\GraphicsJamFramework\EngineLoop.h(29,5): warning C4067: unexpected tokens following preprocessor directive - expected a newline
-  (compiling source file 'EngineLoop.cpp')
-  
-C:\Users\edwar\Documents\GitHub\GraphicsJamFramework\GraphicsJamFramework\EngineLoop.cpp(30,5): warning C4067: unexpected tokens following preprocessor directive - expected a newline
-C:\Users\edwar\Documents\GitHub\GraphicsJamFramework\GraphicsJamFramework\EngineLoop.cpp(91,89): warning C4244: 'argument': conversion from 'float' to 'Uint8', possible loss of data
-C:\Users\edwar\Documents\GitHub\GraphicsJamFramework\GraphicsJamFramework\EngineLoop.cpp(91,80): warning C4244: 'argument': conversion from 'float' to 'Uint8', possible loss of data
-C:\Users\edwar\Documents\GitHub\GraphicsJamFramework\GraphicsJamFramework\EngineLoop.cpp(91,71): warning C4244: 'argument': conversion from 'float' to 'Uint8', possible loss of data
-C:\Users\edwar\Documents\GitHub\GraphicsJamFramework\GraphicsJamFramework\EngineLoop.cpp(291,5): warning C4067: unexpected tokens following preprocessor directive - expected a newline
-C:\Users\edwar\Documents\GitHub\GraphicsJamFramework\GraphicsJamFramework\EngineLoop.cpp(328,38): warning C4267: 'initializing': conversion from 'size_t' to 'uint32_t', possible loss of data
-C:\Users\edwar\Documents\GitHub\GraphicsJamFramework\GraphicsJamFramework\EngineLoop.cpp(358,46): warning C4267: '=': conversion from 'size_t' to 'unsigned int', possible loss of data
-C:\Users\edwar\Documents\GitHub\GraphicsJamFramework\GraphicsJamFramework\EngineLoop.cpp(359,46): warning C4267: 'argument': conversion from 'size_t' to '_Ty', possible loss of data
-C:\Users\edwar\Documents\GitHub\GraphicsJamFramework\GraphicsJamFramework\EngineLoop.cpp(359,46): warning C4267:         with
-C:\Users\edwar\Documents\GitHub\GraphicsJamFramework\GraphicsJamFramework\EngineLoop.cpp(359,46): warning C4267:         [
-C:\Users\edwar\Documents\GitHub\GraphicsJamFramework\GraphicsJamFramework\EngineLoop.cpp(359,46): warning C4267:             _Ty=uint32_t
-C:\Users\edwar\Documents\GitHub\GraphicsJamFramework\GraphicsJamFramework\EngineLoop.cpp(359,46): warning C4267:         ]
+C:\Users\edwar\Documents\GitHub\GraphicsJamFramework\GraphicsJamFramework\Camera.cpp(52,5): warning C4067: unexpected tokens following preprocessor directive - expected a newline
+C:\Users\edwar\Documents\GitHub\GraphicsJamFramework\GraphicsJamFramework\Camera.cpp(83,47): warning C4267: 'argument': conversion from 'size_t' to 'GLuint', possible loss of data
+C:\Users\edwar\Documents\GitHub\GraphicsJamFramework\GraphicsJamFramework\Camera.cpp(90,14): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\edwar\Documents\GitHub\GraphicsJamFramework\GraphicsJamFramework\Camera.cpp(220,5): warning C4067: unexpected tokens following preprocessor directive - expected a newline
+C:\Users\edwar\Documents\GitHub\GraphicsJamFramework\GraphicsJamFramework\Camera.cpp(280,5): warning C4067: unexpected tokens following preprocessor directive - expected a newline
   GraphicsJamFramework.vcxproj -> C:\Users\edwar\Documents\GitHub\GraphicsJamFramework\x64\Debug\GraphicsJamFramework.exe

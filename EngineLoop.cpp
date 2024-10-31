@@ -3,7 +3,7 @@
 #define TINYOBJLOADER_IMPLEMENTATION
 #include "tiny_obj_loader.h"
 
-static const char* GAssetPath = "Assets/Cube/cube.obj";
+static const char* GAssetPath = "Assets/Teapot/teapot.obj";
 
 static void APIENTRY OpenglCallbackFunction(
     GLenum source,
@@ -23,14 +23,16 @@ static void APIENTRY OpenglCallbackFunction(
     }
 }
 
+std::string shaderSrc0;
+std::string shaderSrc1;
 
 ProcessState EngineLoop::Init()
 {
-    std::string shaderSrc;
 #if RAYTRACER 1
     shaderSrc = GShaderPath + "SoftwareRaytracer" + GShaderExt;
 #else
-    shaderSrc = GShaderPath + "SoftwareRasterizer" + GShaderExt;
+    shaderSrc1 = GShaderPath + "SoftwareRasterizer" + GShaderExt;
+    shaderSrc0 = GShaderPath + "TriangleFilter" + GShaderExt;
 
     if (LoadAssets(GAssetPath) != ProcessState::OKAY)
     {
@@ -38,7 +40,7 @@ ProcessState EngineLoop::Init()
     }
 #endif
 
-    if (SDLInit(shaderSrc.c_str()) != ProcessState::OKAY)
+    if (SDLInit() != ProcessState::OKAY)
     {
         return ProcessState::NOT_OKAY;
     }
@@ -226,7 +228,7 @@ bool EngineLoop::ShutdownPending() const
     return SDLEvent.type == SDL_QUIT;
 }
 
-ProcessState EngineLoop::SDLInit(const char* computePath)
+ProcessState EngineLoop::SDLInit()
 {
     if (SDL_Init(SDL_INIT_VIDEO) < 0)
     {
@@ -270,7 +272,12 @@ ProcessState EngineLoop::SDLInit(const char* computePath)
 
     m_Camera = std::make_unique<Camera>(pos, target, GWorldUp, 5.0f, 0.0f, 0.0f);
 
-    if (m_Camera->InitShader(computePath) != ProcessState::OKAY)
+    if (m_Camera->InitTriangleFilterShader(shaderSrc0.c_str()) != ProcessState::OKAY)
+    {
+        return ProcessState::NOT_OKAY;
+    }
+
+    if (m_Camera->InitRasterShader(shaderSrc1.c_str()) != ProcessState::OKAY)
     {
         return ProcessState::NOT_OKAY;
     }

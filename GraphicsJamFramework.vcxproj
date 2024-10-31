@@ -165,8 +165,10 @@
   <ItemGroup>
     <None Include="Shaders\Projection.shaderutil" />
     <None Include="Shaders\SoftwareRasterizer.shader" />
+    <None Include="Shaders\ClusterFilter.shader" />
     <None Include="Shaders\SoftwareRaytracer.shader" />
     <None Include="Shaders\Triangle.shaderutil" />
+    <None Include="Shaders\TriangleFilter.shader" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />

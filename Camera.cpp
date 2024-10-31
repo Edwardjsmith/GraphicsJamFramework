@@ -19,7 +19,8 @@ Camera::Camera(glm::vec3& position, glm::vec3& targetLoc, glm::vec3& worldUp, fl
 
 Camera::~Camera()
 {
-	m_ComputeShader.reset();
+	m_ComputeShader[0].reset();
+	m_ComputeShader[1].reset();
 }
 
 void Camera::Update(float delta)
@@ -58,11 +59,68 @@ int GDispatchY = 0;
 
 std::vector<VertexInput> GVertexData;
 std::vector<uint32_t> GIndexData;
+std::vector<int> GVisibleIndexData;
 #endif
 
 void Camera::Draw()
 {
-	if (m_ComputeShader) 
+	if (m_ComputeShader[0])
+	{
+		m_ComputeShader[0]->Use();
+
+		const unsigned int programID = m_ComputeShader[0]->GetID();
+
+		int index = 0;
+		for (GLint buffer : m_ComputeShader[0]->GetShaderBuffers())
+		{
+			glBindBufferBase(GL_SHADER_STORAGE_BUFFER, index++, buffer);
+
+		}
+
+		GVisibleIndexData.clear();
+		GVisibleIndexData.resize(GIndexData.size() / 3);
+
+		glDispatchCompute((GVisibleIndexData.size() / 3), 1, 1);
+		glMemoryBarrier(GL_ALL_BARRIER_BITS);
+
+		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, 4);
+		glGetBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, (sizeof(int) * GIndexData.size()) / 3, (GLvoid*)GVisibleIndexData.data());
+		glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
+		for (int i = GVisibleIndexData.size() - 1; i > 0; --i)
+		{
+			if (GVisibleIndexData[i] < 0)
+			{
+				GVisibleIndexData.erase(GVisibleIndexData.begin() + i);
+			}
+		}
+	}
+
+	if (m_ComputeShader[1])
+	{
+		m_ComputeShader[1]->Use();
+
+		m_ComputeShader[1]->SetInt("screenWidth", SCREEN_WIDTH);
+		m_ComputeShader[1]->SetInt("screenHeight", SCREEN_HEIGHT);
+
+		const unsigned int programID = m_ComputeShader[1]->GetID();
+
+		m_ComputeShader[1]->SetMatrix("ProjectionViewModel", m_projection * m_view * m_ObjTransform);
+
+		int index = 0;
+		for (GLint buffer : m_ComputeShader[1]->GetShaderBuffers())
+		{
+			glBindBufferBase(GL_SHADER_STORAGE_BUFFER, index++, buffer);
+		}
+
+		glDispatchCompute(GDispatchX, GDispatchY, 1);
+		glMemoryBarrier(GL_ALL_BARRIER_BITS);
+
+		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, 8);
+		glGetBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(m_PixelData), (GLvoid*)m_PixelData);
+		glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+	}
+	/*if (m_ComputeShader) 
 	{
 		m_ComputeShader->Use();
 
@@ -91,7 +149,7 @@ void Camera::Draw()
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, m_PixelBuffer);
 		glGetBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(m_PixelData), (GLvoid*)m_PixelData);
 		glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
-	}
+	}*/
 }
 
 glm::vec3 Camera::GetPosition() const
@@ -149,34 +207,51 @@ void Camera::SetYaw(float yaw)
 	m_yaw = yaw;
 }
 
-ProcessState Camera::InitShader(const char* path)
+ProcessState Camera::InitShader(const char* path, int index)
 {
-	m_ComputeShader = std::make_unique<ComputeShader>();
+	m_ComputeShader[index] = std::make_unique<ComputeShader>();
 
-	if (m_ComputeShader->CompileShader(path) != ProcessState::OKAY)
+	if (m_ComputeShader[index]->CompileShader(path) != ProcessState::OKAY)
 	{
 		return ProcessState::NOT_OKAY;
 	}
 
-	glGenBuffers(1, &m_PixelBuffer);
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, m_PixelBuffer);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(m_PixelData), 0, GL_DYNAMIC_DRAW);
-
 #if RAYTRACER 1
 #else
 
-	glGenBuffers(1, &m_DepthBuffer);
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, m_DepthBuffer);
+	GLuint buffer = 0;
+	std::vector<GLint>& Buffers = m_ComputeShader[index]->GetShaderBuffers();
+
+	//Depth buffer
+	glGenBuffers(1, &buffer);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, buffer);
 	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(float) * (SCREEN_WIDTH * SCREEN_HEIGHT), 0, GL_DYNAMIC_DRAW);
+	Buffers.push_back(buffer);
 
-	glGenBuffers(1, &m_VertexBuffer);
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, m_VertexBuffer);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(VertexInput) * GVertexData.size(), GVertexData.data(), GL_DYNAMIC_DRAW);
+	//Vertex buffer
+	glGenBuffers(1, &buffer);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, buffer);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(VertexInput) * GVertexData.size(), GVertexData.data(), GL_DYNAMIC_READ);
+	Buffers.push_back(buffer);
 
-	glGenBuffers(1, &m_IndexBuffer);
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, m_IndexBuffer);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(int) * GIndexData.size(), GIndexData.data(), GL_DYNAMIC_DRAW);
+	//Index buffer
+	glGenBuffers(1, &buffer);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, buffer);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(int) * GIndexData.size(), GIndexData.data(), GL_DYNAMIC_READ);
+	Buffers.push_back(buffer);
 #endif
+
+	//Pixel buffer
+	glGenBuffers(1, &buffer);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, buffer);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(m_PixelData), 0, GL_DYNAMIC_DRAW);
+	Buffers.push_back(buffer);
+
+	//Visible index
+	glGenBuffers(1, &buffer);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, buffer);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, (sizeof(int) * GIndexData.size()) / 3, 0, GL_DYNAMIC_DRAW);
+	Buffers.push_back(buffer);
 
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
@@ -191,6 +266,58 @@ const void* Camera::GetPixelData() const
 void Camera::ResetPixelData()
 {
 	std::fill(std::begin(m_PixelData), std::end(m_PixelData), PixelData());
+}
+
+ProcessState Camera::InitRasterShader(const char* path)
+{
+	return InitShader(path, 1);
+}
+
+ProcessState Camera::InitTriangleFilterShader(const char* path)
+{
+	m_ComputeShader[0] = std::make_unique<ComputeShader>();
+
+	if (m_ComputeShader[0]->CompileShader(path) != ProcessState::OKAY)
+	{
+		return ProcessState::NOT_OKAY;
+	}
+
+#if RAYTRACER 1
+#else
+
+	GLuint buffer = 0;
+	std::vector<GLint>& Buffers = m_ComputeShader[0]->GetShaderBuffers();
+
+	//Depth
+	glGenBuffers(1, &buffer);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, buffer);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(float) * (SCREEN_WIDTH * SCREEN_HEIGHT), 0, GL_DYNAMIC_DRAW);
+	Buffers.push_back(buffer);
+
+	//Vertex
+	glGenBuffers(1, &buffer);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, buffer);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(VertexInput) * GVertexData.size(), GVertexData.data(), GL_DYNAMIC_READ);
+	Buffers.push_back(buffer);
+
+	//Index
+	glGenBuffers(1, &buffer);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, buffer);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(int) * GIndexData.size(), GIndexData.data(), GL_DYNAMIC_READ);
+	Buffers.push_back(buffer);
+
+	//Visible index
+	glGenBuffers(1, &buffer);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, buffer);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, (sizeof(int) * GIndexData.size()) / 3, 0, GL_DYNAMIC_DRAW);
+	Buffers.push_back(buffer);
+
+
+#endif
+
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
+	return ProcessState::OKAY;
 }
 
 

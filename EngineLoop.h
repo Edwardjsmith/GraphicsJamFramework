@@ -23,7 +23,7 @@ private:
 
 	SDL_Event SDLEvent;
 
-	ProcessState SDLInit(const char* computePath);
+	ProcessState SDLInit();
 	void SDLCleanup();
 
 #if RAYTRACER 1

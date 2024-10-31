@@ -14,17 +14,7 @@ void BuildTriangle(inout Triangle triangle, in vec3 left, in vec3 right, in vec3
 bool EvaluateEdgeFunction(in vec3 E, in vec2 samp)
 {
 	// Interpolate edge function at given sample
-	float result = (E.x * samp.x) + (E.y * samp.y) + E.z;
-
-	// Apply tie-breaking rules on shared vertices in order to avoid double-shading fragments
-	if (result > 0.0f) return true;
-	else if (result < 0.0f) return false;
-
-	if (E.x > 0.f) return true;
-	else if (E.x < 0.0f) return false;
-
-	if ((E.x == 0.0f) && (E.y < 0.0f)) return false;
-	else return true;
+	return ((E.x * samp.x) + (E.y * samp.y) + E.z) > 0.0f;
 }
 
 bool PixelInsideTriangle(in vec3 left, in vec3 right, in vec3 top, in vec3 pixelCoords)

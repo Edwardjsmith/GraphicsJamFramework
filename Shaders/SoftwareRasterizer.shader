@@ -7,11 +7,6 @@ struct PixelData
 	vec4 color;
 };
 
-struct TriangleData
-{
-	VertexData[3] vertexData;
-};
-
 layout(binding = 0) buffer depth
 {
 	float data[];

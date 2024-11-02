@@ -14,6 +14,13 @@ struct VertexData
 {
 	vec3 pos;
 	vec3 norm;
+	vec2 UV;
+};
+
+struct TriangleData
+{
+	VertexData vertexData[3];
+	int bInitialized;
 };
 
 mat3 identity =

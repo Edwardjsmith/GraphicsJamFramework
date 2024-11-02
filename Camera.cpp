@@ -59,7 +59,7 @@ int GDispatchY = 0;
 
 std::vector<VertexInput> GVertexData;
 std::vector<uint32_t> GIndexData;
-std::vector<int> GVisibleIndexData;
+std::vector<TriangleData> GVisibleTriangleData;
 #endif
 
 void Camera::Draw()
@@ -77,21 +77,21 @@ void Camera::Draw()
 
 		}
 
-		GVisibleIndexData.clear();
-		GVisibleIndexData.resize(GIndexData.size() / 3);
+		GVisibleTriangleData.clear();
+		GVisibleTriangleData.resize(GIndexData.size() / 3);
 
-		glDispatchCompute((GVisibleIndexData.size() / 3), 1, 1);
+		glDispatchCompute((GVisibleTriangleData.size()), 1, 1);
 		glMemoryBarrier(GL_ALL_BARRIER_BITS);
 
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, 4);
-		glGetBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, (sizeof(int) * GIndexData.size()) / 3, (GLvoid*)GVisibleIndexData.data());
+		glGetBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(TriangleData) * GVisibleTriangleData.size(), (GLvoid*)GVisibleTriangleData.data());
 		glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
-		for (int i = GVisibleIndexData.size() - 1; i > 0; --i)
+		for (int i = GVisibleTriangleData.size() - 1; i > 0; --i)
 		{
-			if (GVisibleIndexData[i] < 0)
+			if (GVisibleTriangleData[i].bInitialized == 0)
 			{
-				GVisibleIndexData.erase(GVisibleIndexData.begin() + i);
+				GVisibleTriangleData.erase(GVisibleTriangleData.begin() + i);
 			}
 		}
 	}
@@ -247,11 +247,11 @@ ProcessState Camera::InitShader(const char* path, int index)
 	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(m_PixelData), 0, GL_DYNAMIC_DRAW);
 	Buffers.push_back(buffer);
 
-	//Visible index
-	glGenBuffers(1, &buffer);
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, buffer);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, (sizeof(int) * GIndexData.size()) / 3, 0, GL_DYNAMIC_DRAW);
-	Buffers.push_back(buffer);
+	////Visible index
+	//glGenBuffers(1, &buffer);
+	//glBindBuffer(GL_SHADER_STORAGE_BUFFER, buffer);
+	//glBufferData(GL_SHADER_STORAGE_BUFFER, (sizeof(TriangleData) * GIndexData.size()) / 3, GVisibleTriangleData.data(), GL_DYNAMIC_READ);
+	//Buffers.push_back(buffer);
 
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
@@ -306,10 +306,10 @@ ProcessState Camera::InitTriangleFilterShader(const char* path)
 	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(int) * GIndexData.size(), GIndexData.data(), GL_DYNAMIC_READ);
 	Buffers.push_back(buffer);
 
-	//Visible index
+	////Visible index
 	glGenBuffers(1, &buffer);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, buffer);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, (sizeof(int) * GIndexData.size()) / 3, 0, GL_DYNAMIC_DRAW);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, (sizeof(TriangleData) * GIndexData.size()) / 3, 0, GL_DYNAMIC_DRAW);
 	Buffers.push_back(buffer);
 
 

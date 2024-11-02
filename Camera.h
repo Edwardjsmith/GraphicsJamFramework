@@ -12,16 +12,28 @@ const unsigned int SCREEN_HEIGHT = 480;
 
 #if RAYTRACER 1
 #else
+#pragma pack(push, 1)
 struct VertexInput
 {
 	glm::vec3   Pos;
+	GLbyte padding0[4];
 	glm::vec3   Normal;
+	GLbyte padding1[4];
 	glm::vec2	UV;
+	GLbyte padding2[8];
+};
+#pragma pack( pop )
+
+struct TriangleData
+{
+	VertexInput VertData[3];
+	int bInitialized = 0;
+	GLbyte padding0[12];
 };
 
 extern std::vector<VertexInput> GVertexData;
 extern std::vector<uint32_t> GIndexData;
-extern std::vector<int> GVisibleIndexData;
+extern std::vector<TriangleData> GVisibleTriangleData;
 
 extern int GDispatchX, GDispatchY;
 #endif

@@ -393,7 +393,11 @@ ProcessState EngineLoop::LoadAssets(const char* pathName)
                             uv.t = glm::abs(uy);
                         }
 
-                        VertexInput uniqueVertex = { pos, normal, uv };
+                        VertexInput uniqueVertex;
+                        uniqueVertex.Pos = pos;
+                        uniqueVertex.Normal = normal;
+                        uniqueVertex.UV = uv;
+                    
                         GVertexData.push_back(uniqueVertex);
                     }
                 }

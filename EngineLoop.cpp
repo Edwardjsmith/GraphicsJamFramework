@@ -59,8 +59,11 @@ ProcessState EngineLoop::Init()
 
 ProcessState EngineLoop::Draw()
 {
-    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    if (m_SDLWindow == nullptr)
+    {
+        printf("Window was null!");
+        return ProcessState::NOT_OKAY;
+    }
 
     if (m_Camera == nullptr)
     {
@@ -68,51 +71,53 @@ ProcessState EngineLoop::Draw()
         return ProcessState::NOT_OKAY;
     }
 
-    m_Camera->Draw();
+    m_MainSurface = SDL_GetWindowSurface(m_SDLWindow);
 
-    if (m_SDLWindow && m_mainSurface)
+    if (m_MainSurface == nullptr)
     {
-        SDL_LockSurface(m_mainSurface);
-
-        Uint32* const pixels = (Uint32*)m_mainSurface->pixels;
-
-        const void* const pixelData = m_Camera->GetPixelData();
-
-        for (int i = 0; i < SCREEN_WIDTH; ++i)
-        {
-            for (int j = 0; j < SCREEN_HEIGHT; ++j)
-            {
-                const int index = i + (j * SCREEN_WIDTH);
-                const PixelData& data = static_cast<const PixelData*>(pixelData)[index];
-
-                if (data.color == glm::vec4(0))
-                {
-                    float colourX = (i / (SCREEN_WIDTH * 2.0f)) * 255.0f;
-                    float colourY = (j / (SCREEN_HEIGHT * 2.0f)) * 255.0f;
-
-                    pixels[index] = SDL_MapRGB(m_mainSurface->format, colourX, colourY, 0.0f);
-                }
-                else
-                {
-                    const Uint8 r = static_cast<Uint8>(data.color.r);
-                    const Uint8 g = static_cast<Uint8>(data.color.g);
-                    const Uint8 b = static_cast<Uint8>(data.color.b);
-
-                    pixels[index] = SDL_MapRGB(m_mainSurface->format, r, g, b);
-                }
-            }
-        }
-
-        SDL_UnlockSurface(m_mainSurface);
-        SDL_UpdateWindowSurface(m_SDLWindow);
-
-        m_Camera->ResetPixelData();
-    }
-    else
-    {
-        printf("Window or surface was null!");
+        printf("Main surface was null!");
         return ProcessState::NOT_OKAY;
     }
+
+    m_Camera->Draw();
+
+    SDL_LockSurface(m_MainSurface);
+
+    Uint32* const pixels = (Uint32*)m_MainSurface->pixels;
+
+    const void* const pixelData = m_Camera->GetPixelData();
+
+    for (int i = 0; i < SCREEN_WIDTH; ++i)
+    {
+        for (int j = 0; j < SCREEN_HEIGHT; ++j)
+        {
+            const int index = i + (j * SCREEN_WIDTH);
+            const PixelData& data = static_cast<const PixelData*>(pixelData)[index];
+
+            if (data.color == glm::vec4(0))
+            {
+                float colourX = (i / (SCREEN_WIDTH * 2.0f)) * 255.0f;
+                float colourY = (j / (SCREEN_HEIGHT * 2.0f)) * 255.0f;
+
+                pixels[index] = SDL_MapRGB(m_MainSurface->format, colourX, colourY, 0.0f);
+            }
+            else
+            {
+                const Uint8 r = static_cast<Uint8>(data.color.r);
+                const Uint8 g = static_cast<Uint8>(data.color.g);
+                const Uint8 b = static_cast<Uint8>(data.color.b);
+
+                pixels[index] = SDL_MapRGB(m_MainSurface->format, r, g, b);
+            }
+        }
+    }
+
+    SDL_UnlockSurface(m_MainSurface);
+    SDL_UpdateWindowSurface(m_SDLWindow);
+
+    m_Camera->ResetPixelData();
+
+   // SDL_GL_SwapWindow(m_SDLWindow);
 
     return ProcessState::OKAY;
 }
@@ -153,13 +158,13 @@ ProcessState EngineLoop::Update(float delta)
                 {
                     case SDLK_LEFT:
                     {
-                        newPos = cameraPos - glm::normalize(glm::cross(cameraForward, cameraUp)) * cameraSpeed;
+                        newPos = cameraPos - (cameraRight * cameraSpeed);
                         m_Camera->SetPosition(newPos);
                         break;
                     }
                     case SDLK_RIGHT:
                     {
-                        newPos = cameraPos + glm::normalize(glm::cross(cameraForward, cameraUp)) * cameraSpeed;
+                        newPos = cameraPos + (cameraRight * cameraSpeed);
                         m_Camera->SetPosition(newPos);
                         break;
                     }
@@ -250,14 +255,14 @@ ProcessState EngineLoop::SDLInit()
             SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 6);
             SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_COMPATIBILITY);
 
-            context = SDL_GL_CreateContext(m_SDLWindow);
+            m_Context = SDL_GL_CreateContext(m_SDLWindow);
 
-            if (context == nullptr)
+            if (m_Context == nullptr)
             {
                 return ProcessState::NOT_OKAY;
             }
 
-            m_mainSurface = SDL_GetWindowSurface(m_SDLWindow);
+            m_MainSurface = SDL_GetWindowSurface(m_SDLWindow);
         }
     }
 
@@ -287,10 +292,10 @@ ProcessState EngineLoop::SDLInit()
 
 void EngineLoop::SDLCleanup()
 {
-    m_mainSurface = nullptr;
+    m_MainSurface = nullptr;
     SDL_DestroyWindow(m_SDLWindow);
     m_SDLWindow = nullptr;
-    SDL_GL_DeleteContext(context);
+    SDL_GL_DeleteContext(m_Context);
 
     SDL_Quit();
 }
@@ -394,7 +399,7 @@ ProcessState EngineLoop::LoadAssets(const char* pathName)
                         }
 
                         VertexInput uniqueVertex;
-                        uniqueVertex.Pos = pos;
+                        uniqueVertex.Pos = glm::vec4(pos.x, pos.y, pos.z, 1.0f);
                         uniqueVertex.Normal = normal;
                         uniqueVertex.UV = uv;
                     
@@ -404,8 +409,8 @@ ProcessState EngineLoop::LoadAssets(const char* pathName)
             }
         }
 
-        GDispatchX = SCREEN_WIDTH / 16;//((GIndexData.size()) / 3);
-        GDispatchY = SCREEN_HEIGHT / 16;
+        GDispatchX = SCREEN_WIDTH / 32;//((GIndexData.size()) / 3);
+        GDispatchY = SCREEN_HEIGHT / 32;
 
         return ProcessState::OKAY;
     }

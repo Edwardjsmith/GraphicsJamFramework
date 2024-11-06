@@ -15,8 +15,7 @@ const unsigned int SCREEN_HEIGHT = 480;
 #pragma pack(push, 1)
 struct VertexInput
 {
-	glm::vec3   Pos;
-	GLbyte padding0[4];
+	glm::vec4   Pos;
 	glm::vec3   Normal;
 	GLbyte padding1[4];
 	glm::vec2	UV;

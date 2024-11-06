@@ -19,7 +19,7 @@ private:
 
 //SDL stuff
 	SDL_Window* m_SDLWindow = nullptr;
-	SDL_Surface* m_mainSurface = nullptr;
+	SDL_Surface* m_MainSurface = nullptr;
 
 	SDL_Event SDLEvent;
 
@@ -33,7 +33,7 @@ private:
 #endif
 
 //OpenGL context
-	SDL_GLContext context = nullptr;
+	SDL_GLContext m_Context = nullptr;
 
 	std::unique_ptr<Camera> m_Camera = nullptr;
 

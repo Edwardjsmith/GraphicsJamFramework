@@ -70,42 +70,34 @@ void Camera::Draw()
 
 		const unsigned int programID = m_ComputeShader[0]->GetID();
 
+		m_ComputeShader[0]->SetMatrix("ProjectionViewModel", m_projection * m_view * m_ObjTransform);
+
 		int index = 0;
 		for (GLint buffer : m_ComputeShader[0]->GetShaderBuffers())
 		{
 			glBindBufferBase(GL_SHADER_STORAGE_BUFFER, index++, buffer);
-
 		}
 
 		GVisibleTriangleData.clear();
 		GVisibleTriangleData.resize(GIndexData.size() / 3);
 
-		glDispatchCompute((GVisibleTriangleData.size()), 1, 1);
+		int dispatch = GVisibleTriangleData.size() / 128;
+
+		glDispatchCompute(dispatch, 1, 1);
 		glMemoryBarrier(GL_ALL_BARRIER_BITS);
 
-		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, 4);
+		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, 3);
 		glGetBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(TriangleData) * GVisibleTriangleData.size(), (GLvoid*)GVisibleTriangleData.data());
 		glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
-
-		for (int i = GVisibleTriangleData.size() - 1; i > 0; --i)
-		{
-			if (GVisibleTriangleData[i].bInitialized == 0)
-			{
-				GVisibleTriangleData.erase(GVisibleTriangleData.begin() + i);
-			}
-		}
 	}
 
 	if (m_ComputeShader[1])
 	{
 		m_ComputeShader[1]->Use();
 
-		m_ComputeShader[1]->SetInt("screenWidth", SCREEN_WIDTH);
-		m_ComputeShader[1]->SetInt("screenHeight", SCREEN_HEIGHT);
-
 		const unsigned int programID = m_ComputeShader[1]->GetID();
 
-		m_ComputeShader[1]->SetMatrix("ProjectionViewModel", m_projection * m_view * m_ObjTransform);
+		m_ComputeShader[1]->SetInt("screenWidth", SCREEN_WIDTH);
 
 		int index = 0;
 		for (GLint buffer : m_ComputeShader[1]->GetShaderBuffers())
@@ -113,43 +105,16 @@ void Camera::Draw()
 			glBindBufferBase(GL_SHADER_STORAGE_BUFFER, index++, buffer);
 		}
 
+		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, 5);
+		glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(TriangleData) * GVisibleTriangleData.size(), (GLvoid*)GVisibleTriangleData.data(), GL_DYNAMIC_READ);
+
 		glDispatchCompute(GDispatchX, GDispatchY, 1);
 		glMemoryBarrier(GL_ALL_BARRIER_BITS);
 
-		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, 8);
+		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, 6);
 		glGetBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(m_PixelData), (GLvoid*)m_PixelData);
 		glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 	}
-	/*if (m_ComputeShader) 
-	{
-		m_ComputeShader->Use();
-
-		m_ComputeShader->SetInt("screenWidth", SCREEN_WIDTH);
-		m_ComputeShader->SetInt("screenHeight", SCREEN_HEIGHT);
-
-		const unsigned int programID = m_ComputeShader->GetID();
-
-		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, m_PixelBuffer);
-
-#if RAYTRACER 1
-		m_ComputeShader->SetVec3("cameraPos", m_position);
-		m_ComputeShader->SetMatrix("inverseProjection", glm::inverse(m_projection));
-		m_ComputeShader->SetMatrix("inverseView", glm::inverse(m_view));
-#else
-		m_ComputeShader->SetMatrix("ProjectionViewModel", m_projection * m_view * m_ObjTransform);
-
-		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, m_DepthBuffer);
-		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, m_VertexBuffer);
-		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, m_IndexBuffer);
-#endif
-
-		glDispatchCompute(GDispatchX, GDispatchY, 1);
-		glMemoryBarrier(GL_ALL_BARRIER_BITS);
-
-		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, m_PixelBuffer);
-		glGetBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(m_PixelData), (GLvoid*)m_PixelData);
-		glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
-	}*/
 }
 
 glm::vec3 Camera::GetPosition() const
@@ -228,30 +193,19 @@ ProcessState Camera::InitShader(const char* path, int index)
 	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(float) * (SCREEN_WIDTH * SCREEN_HEIGHT), 0, GL_DYNAMIC_DRAW);
 	Buffers.push_back(buffer);
 
-	//Vertex buffer
-	glGenBuffers(1, &buffer);
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, buffer);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(VertexInput) * GVertexData.size(), GVertexData.data(), GL_DYNAMIC_READ);
-	Buffers.push_back(buffer);
-
-	//Index buffer
-	glGenBuffers(1, &buffer);
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, buffer);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(int) * GIndexData.size(), GIndexData.data(), GL_DYNAMIC_READ);
-	Buffers.push_back(buffer);
 #endif
+
+	//Triangle buffer
+	glGenBuffers(1, &buffer);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, buffer);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, 0, 0, GL_DYNAMIC_READ);
+	Buffers.push_back(buffer);
 
 	//Pixel buffer
 	glGenBuffers(1, &buffer);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, buffer);
 	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(m_PixelData), 0, GL_DYNAMIC_DRAW);
 	Buffers.push_back(buffer);
-
-	////Visible index
-	//glGenBuffers(1, &buffer);
-	//glBindBuffer(GL_SHADER_STORAGE_BUFFER, buffer);
-	//glBufferData(GL_SHADER_STORAGE_BUFFER, (sizeof(TriangleData) * GIndexData.size()) / 3, GVisibleTriangleData.data(), GL_DYNAMIC_READ);
-	//Buffers.push_back(buffer);
 
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
@@ -288,12 +242,6 @@ ProcessState Camera::InitTriangleFilterShader(const char* path)
 	GLuint buffer = 0;
 	std::vector<GLint>& Buffers = m_ComputeShader[0]->GetShaderBuffers();
 
-	//Depth
-	glGenBuffers(1, &buffer);
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, buffer);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(float) * (SCREEN_WIDTH * SCREEN_HEIGHT), 0, GL_DYNAMIC_DRAW);
-	Buffers.push_back(buffer);
-
 	//Vertex
 	glGenBuffers(1, &buffer);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, buffer);
@@ -306,12 +254,11 @@ ProcessState Camera::InitTriangleFilterShader(const char* path)
 	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(int) * GIndexData.size(), GIndexData.data(), GL_DYNAMIC_READ);
 	Buffers.push_back(buffer);
 
-	////Visible index
+	//Triangle buffer
 	glGenBuffers(1, &buffer);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, buffer);
 	glBufferData(GL_SHADER_STORAGE_BUFFER, (sizeof(TriangleData) * GIndexData.size()) / 3, 0, GL_DYNAMIC_DRAW);
 	Buffers.push_back(buffer);
-
 
 #endif
 

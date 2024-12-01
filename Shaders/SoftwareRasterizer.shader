@@ -2,27 +2,21 @@
 
 #include Projection
 
-struct PixelData
-{
-	vec4 color;
-};
-
-layout(binding = 0) buffer depth
-{
-	float data[];
-} depthBuffer;
-
-layout(binding = 1) buffer triangle
+layout(binding = 0) buffer triangle
 {
 	TriangleData data[];
 } triangleBuffer;
 
-layout(binding = 2) buffer pixel
+layout(binding = 1) buffer pixel
 {
-	PixelData data[];
+	uint data[];
 } pixelDataBuffer;
 
-vec4 black = vec4(0);
+layout(binding = 2) buffer depth
+{
+	float data[];
+} depthBuffer;
+
 
 layout(local_size_x = 32, local_size_y = 32, local_size_z = 1) in;
 void main()
@@ -33,22 +27,24 @@ void main()
 	vec3 samp = vec3(indexX, indexY, 1.0f);
 
 	uint index = indexX + (indexY * screenWidth);
-	depthBuffer.data[index] = 100000000000000.0f;
-	pixelDataBuffer.data[index].color = black;
+
+	//pixelDataBuffer.data[triangleID] = uint((0 << 24) | (0 << 16) | (0 << 8) | (255));
 
 	uint indicesLen = triangleBuffer.data.length();
 
 	for (uint j = 0; j < indicesLen; ++j)
 	{
-		if (triangleBuffer.data[j].bInitialized == 0)
-		{
-			continue;
-		}
+		uint indicesIndex = j * 3;
+
+		//From NDC to clip
+		vec4 v0Clip = triangleBuffer.data[j].vertexData[0].pos;
+		vec4 v1Clip = triangleBuffer.data[j].vertexData[1].pos;
+		vec4 v2Clip = triangleBuffer.data[j].vertexData[2].pos;
 
 		//Clip to raster
-		vec4 v0Raster = triangleBuffer.data[j].vertexData[0].pos;
-		vec4 v1Raster = triangleBuffer.data[j].vertexData[1].pos;
-		vec4 v2Raster = triangleBuffer.data[j].vertexData[2].pos;
+		vec4 v0Raster = ToRaster(v0Clip);
+		vec4 v1Raster = ToRaster(v1Clip);
+		vec4 v2Raster = ToRaster(v2Clip);
 
 		mat3 model =
 		{
@@ -57,14 +53,14 @@ void main()
 			{ v0Raster.w, v1Raster.w, v2Raster.w },
 		};
 
-		vec3 depthConst = model * vec3(1.0f);
-		float depth = (depthConst.x * samp.x) + (depthConst.y * samp.y) + depthConst.z;
-
-		if (depth >= depthBuffer.data[index])
+		//If >= 0, back facing triangle so continue
+		if (Determinant3X3(model) >= 0.0f)
 		{
 			continue;
 		}
 
+		//vec3 depthConst = model * vec3(1.0f);==
+		//float depth = (depthConst.x * samp.x) + (depthConst.y * samp.y) + depthConst.z;
 		model *= identity;
 		model = inverse(model);
 
@@ -74,8 +70,13 @@ void main()
 
 		if (PixelInsideTriangle(E0, E1, E2, samp))
 		{
-			pixelDataBuffer.data[index].color = vec4((triangleBuffer.data[j].vertexData[0].norm * triangleBuffer.data[j].vertexData[1].norm * triangleBuffer.data[j].vertexData[2].norm) * vec3(0.5f) + vec3(0.5f), 1.0f) * 255;
-			depthBuffer.data[index] = depth;
+			vec3 colour = ((triangleBuffer.data[j].vertexData[0].norm * 0.5f) + vec3(0.5f)) * 255;
+			pixelDataBuffer.data[index] = uint((0 << 24) | (uint(colour.r) << 16) | (uint(colour.g) << 8) | (uint(colour.b))); //vec4(vertexBuffer.data[indexBuffer.data[indicesIndex]].norm * vec3(0.5f) + vec3(0.5f), 1.0f) * 255;
+			//depthBuffer.data[index] = depth;
+		}
+		else
+		{
+			pixelDataBuffer.data[index] = 0;
 		}
 	}
 }

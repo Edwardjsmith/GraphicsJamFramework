@@ -5,25 +5,34 @@
 #include <string>
 #include <vector>
 #include <glad.h>
-
-enum class ProcessState
-{
-	NOT_OKAY = -1,
-	OKAY = 0
-};
+#include "Globals.h"
 
 static std::string GShaderPath = "Shaders/";
 static std::string GShaderExt = ".shader";
 static std::string GShaderUtilExt = ".shaderutil";
 static std::string GShaderIncludeWildCard = "#include";
 
+struct VertexData
+{
+	glm::vec3 pos;
+	glm::vec3 norm;
+};
+
+struct TriangleData
+{
+	VertexData data[3];
+};
+
 class ComputeShader
 {
 public:
 
-	ProcessState CompileShader(const char* computePath);
+	virtual ProcessState CompileShader(const char* computePath);
 
 	void Use() { glUseProgram(ID); }
+
+	virtual void Dispatch(void* OutData, int dispatchCount) = 0;
+	virtual void GenerateBuffers() = 0;
 
 	void CheckUniform(int index, const std::string& name) const
 	{

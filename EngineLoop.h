@@ -1,6 +1,7 @@
 #pragma once
 #include <SDL.h>
 #include "Camera.h"
+#include "ComputeShader.h"
 #undef main
 
 class EngineLoop
@@ -19,7 +20,7 @@ private:
 
 //SDL stuff
 	SDL_Window* m_SDLWindow = nullptr;
-	SDL_Surface* m_MainSurface = nullptr;
+	SDL_Surface* m_mainSurface = nullptr;
 
 	SDL_Event SDLEvent;
 

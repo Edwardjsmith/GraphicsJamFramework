@@ -59,11 +59,8 @@ ProcessState EngineLoop::Init()
 
 ProcessState EngineLoop::Draw()
 {
-    if (m_SDLWindow == nullptr)
-    {
-        printf("Window was null!");
-        return ProcessState::NOT_OKAY;
-    }
+    //glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+    //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     if (m_Camera == nullptr)
     {
@@ -71,53 +68,12 @@ ProcessState EngineLoop::Draw()
         return ProcessState::NOT_OKAY;
     }
 
-    m_MainSurface = SDL_GetWindowSurface(m_SDLWindow);
+    m_mainSurface = SDL_GetWindowSurface(m_SDLWindow);
 
-    if (m_MainSurface == nullptr)
-    {
-        printf("Main surface was null!");
-        return ProcessState::NOT_OKAY;
-    }
-
-    m_Camera->Draw();
-
-    SDL_LockSurface(m_MainSurface);
-
-    Uint32* const pixels = (Uint32*)m_MainSurface->pixels;
-
-    const void* const pixelData = m_Camera->GetPixelData();
-
-    for (int i = 0; i < SCREEN_WIDTH; ++i)
-    {
-        for (int j = 0; j < SCREEN_HEIGHT; ++j)
-        {
-            const int index = i + (j * SCREEN_WIDTH);
-            const PixelData& data = static_cast<const PixelData*>(pixelData)[index];
-
-            if (data.color == glm::vec4(0))
-            {
-                float colourX = (i / (SCREEN_WIDTH * 2.0f)) * 255.0f;
-                float colourY = (j / (SCREEN_HEIGHT * 2.0f)) * 255.0f;
-
-                pixels[index] = SDL_MapRGB(m_MainSurface->format, colourX, colourY, 0.0f);
-            }
-            else
-            {
-                const Uint8 r = static_cast<Uint8>(data.color.r);
-                const Uint8 g = static_cast<Uint8>(data.color.g);
-                const Uint8 b = static_cast<Uint8>(data.color.b);
-
-                pixels[index] = SDL_MapRGB(m_MainSurface->format, r, g, b);
-            }
-        }
-    }
-
-    SDL_UnlockSurface(m_MainSurface);
+    SDL_LockSurface(m_mainSurface);
+    m_Camera->Draw(m_mainSurface);
+    SDL_UnlockSurface(m_mainSurface);
     SDL_UpdateWindowSurface(m_SDLWindow);
-
-    m_Camera->ResetPixelData();
-
-   // SDL_GL_SwapWindow(m_SDLWindow);
 
     return ProcessState::OKAY;
 }
@@ -262,7 +218,7 @@ ProcessState EngineLoop::SDLInit()
                 return ProcessState::NOT_OKAY;
             }
 
-            m_MainSurface = SDL_GetWindowSurface(m_SDLWindow);
+            m_mainSurface = SDL_GetWindowSurface(m_SDLWindow);
         }
     }
 
@@ -277,12 +233,12 @@ ProcessState EngineLoop::SDLInit()
 
     m_Camera = std::make_unique<Camera>(pos, target, GWorldUp, 5.0f, 0.0f, 0.0f);
 
-    if (m_Camera->InitTriangleFilterShader(shaderSrc0.c_str()) != ProcessState::OKAY)
+    if (m_Camera->CompileShader<TriangleFilter>(shaderSrc0.c_str()) != ProcessState::OKAY)
     {
         return ProcessState::NOT_OKAY;
     }
 
-    if (m_Camera->InitRasterShader(shaderSrc1.c_str()) != ProcessState::OKAY)
+    if (m_Camera->CompileShader<SoftwareRasterizer>(shaderSrc1.c_str()) != ProcessState::OKAY)
     {
         return ProcessState::NOT_OKAY;
     }
@@ -292,7 +248,7 @@ ProcessState EngineLoop::SDLInit()
 
 void EngineLoop::SDLCleanup()
 {
-    m_MainSurface = nullptr;
+    m_mainSurface = nullptr;
     SDL_DestroyWindow(m_SDLWindow);
     m_SDLWindow = nullptr;
     SDL_GL_DeleteContext(m_Context);

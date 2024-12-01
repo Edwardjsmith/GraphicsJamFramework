@@ -1,0 +1,86 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="EngineLoop.cpp">
+      <Filter>Rasterizer\Engine</Filter>
+    </ClCompile>
+    <ClCompile Include="ComputeShader.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Camera.cpp">
+      <Filter>Rasterizer\Camera</Filter>
+    </ClCompile>
+    <ClCompile Include="glad.c">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="main.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="SoftwareRasterizer.cpp">
+      <Filter>Rasterizer\Shaders</Filter>
+    </ClCompile>
+    <ClCompile Include="TriangleFilter.cpp">
+      <Filter>Rasterizer\Shaders</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="EngineLoop.h">
+      <Filter>Rasterizer\Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="ComputeShader.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Camera.h">
+      <Filter>Rasterizer\Camera</Filter>
+    </ClInclude>
+    <ClInclude Include="SoftwareRasterizer.h">
+      <Filter>Rasterizer\Shaders</Filter>
+    </ClInclude>
+    <ClInclude Include="Globals.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="TriangleFilter.h">
+      <Filter>Rasterizer\Shaders</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Shaders\SoftwareRasterizer.shader">
+      <Filter>Rasterizer\Shaders</Filter>
+    </None>
+    <None Include="Shaders\Projection.shaderutil">
+      <Filter>Rasterizer\Shaders</Filter>
+    </None>
+    <None Include="Shaders\TriangleFilter.shader">
+      <Filter>Rasterizer\Shaders</Filter>
+    </None>
+    <None Include="Shaders\Triangle.shaderutil">
+      <Filter>Rasterizer\Shaders</Filter>
+    </None>
+    <None Include="Shaders\ClusterFilter.shader">
+      <Filter>Rasterizer\Shaders</Filter>
+    </None>
+    <None Include="Shaders\SoftwareRaytracer.shader">
+      <Filter>Raytracer</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Rasterizer">
+      <UniqueIdentifier>{a6f1a474-8f13-4f09-afc6-210df69df76b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Rasterizer\Shaders">
+      <UniqueIdentifier>{13294a57-fe6f-45bd-865d-f6635e3543f9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Rasterizer\Engine">
+      <UniqueIdentifier>{2b33ff64-2dfe-4db2-b6df-c4c08fe0f394}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Core">
+      <UniqueIdentifier>{8f11c144-d93a-4edd-adfa-4d314ffe0680}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Rasterizer\Camera">
+      <UniqueIdentifier>{d5123546-0bd1-45f9-8dd7-590d8e1ef16e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Raytracer">
+      <UniqueIdentifier>{cf95f7f7-7410-48b5-bde0-41d8b166992d}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

@@ -13,7 +13,7 @@ float halfScreenWidth = screenWidth * 0.5f;
 struct VertexData
 {
 	vec4 pos;
-	vec3 norm;
+	vec4 norm;
 	vec2 UV;
 };
 

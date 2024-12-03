@@ -83,5 +83,5 @@ private:
 
 	glm::mat4 m_ObjTransform = glm::mat4(1.0f);
 
-	TriangleData m_TriangleData[512];
+
 };

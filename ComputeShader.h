@@ -12,15 +12,17 @@ static std::string GShaderExt = ".shader";
 static std::string GShaderUtilExt = ".shaderutil";
 static std::string GShaderIncludeWildCard = "#include";
 
-struct VertexData
+struct VertexInput
 {
-	glm::vec3 pos;
-	glm::vec3 norm;
+	alignas(16) glm::vec4 Pos;
+	alignas(16) glm::vec4 Normal;
+	alignas(16) glm::vec2 UV;
 };
 
 struct TriangleData
 {
-	VertexData data[3];
+	VertexInput data[3];
+	bool bInitialized = false;
 };
 
 class ComputeShader

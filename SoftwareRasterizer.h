@@ -9,16 +9,6 @@ struct SoftwareRasterizerParameters
 	size_t PixelsSize = 0;
 };
 
-struct PixelData
-{
-	PixelData()
-	{
-		color = glm::vec4(0);
-	}
-
-	glm::vec4 color;
-};
-
 class SoftwareRasterizer : public ComputeShader
 {
 public:

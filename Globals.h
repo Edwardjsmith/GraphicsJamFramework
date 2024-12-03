@@ -9,3 +9,4 @@ enum class ProcessState
 	OKAY = 0
 };
 
+static const unsigned int GTriangleCount = 512;

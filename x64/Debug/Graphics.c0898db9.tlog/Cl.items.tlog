@@ -3,3 +3,5 @@ C:\Users\edwar\Documents\GitHub\GraphicsJamFramework\GraphicsJamFramework\Comput
 C:\Users\edwar\Documents\GitHub\GraphicsJamFramework\GraphicsJamFramework\EngineLoop.cpp;C:\Users\edwar\Documents\GitHub\GraphicsJamFramework\GraphicsJamFramework\x64\Debug\EngineLoop.obj
 C:\Users\edwar\Documents\GitHub\GraphicsJamFramework\GraphicsJamFramework\glad.c;C:\Users\edwar\Documents\GitHub\GraphicsJamFramework\GraphicsJamFramework\x64\Debug\glad.obj
 C:\Users\edwar\Documents\GitHub\GraphicsJamFramework\GraphicsJamFramework\main.cpp;C:\Users\edwar\Documents\GitHub\GraphicsJamFramework\GraphicsJamFramework\x64\Debug\main.obj
+C:\Users\edwar\Documents\GitHub\GraphicsJamFramework\GraphicsJamFramework\SoftwareRasterizer.cpp;C:\Users\edwar\Documents\GitHub\GraphicsJamFramework\GraphicsJamFramework\x64\Debug\SoftwareRasterizer.obj
+C:\Users\edwar\Documents\GitHub\GraphicsJamFramework\GraphicsJamFramework\TriangleFilter.cpp;C:\Users\edwar\Documents\GitHub\GraphicsJamFramework\GraphicsJamFramework\x64\Debug\TriangleFilter.obj

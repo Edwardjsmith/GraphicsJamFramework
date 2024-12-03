@@ -23,30 +23,43 @@ void main()
 	uint indicesIndex = gl_GlobalInvocationID.x * 3;
 
 	//From NDC to clip
-	vec4 v0Clip = ProjectionViewModel * vertexBuffer.data[indexBuffer.data[indicesIndex]].pos;
-	vec4 v1Clip = ProjectionViewModel * vertexBuffer.data[indexBuffer.data[indicesIndex + 1]].pos;
-	vec4 v2Clip = ProjectionViewModel * vertexBuffer.data[indexBuffer.data[indicesIndex + 2]].pos;
+	vec4 v0Clip = ProjectionViewModel * vec4(vertexBuffer.data[indexBuffer.data[indicesIndex]].pos.xyz, 1.0f);
+	vec4 v1Clip = ProjectionViewModel * vec4(vertexBuffer.data[indexBuffer.data[indicesIndex + 1]].pos.xyz, 1.0f);
+	vec4 v2Clip = ProjectionViewModel * vec4(vertexBuffer.data[indexBuffer.data[indicesIndex + 2]].pos.xyz, 1.0f);
 
 	//float ymin = min(min(v0Clip.y, v1Clip.y), v2Clip.y);
 	//float xmax = max(max(v0Clip.x, v1Clip.x), v2Clip.x);
 	//float ymax = max(max(v0Clip.y, v1Clip.y), v2Clip.y);
 	//float xmin = min(min(v0Clip.x, v1Clip.x), v2Clip.x);
 
-	//if ((xmin > 1.0f) || (ymin > 1.0f))
-	//{
-	//	continue;
-	//}
+	vec4 v0Raster = ToRaster(v0Clip);
+	vec4 v1Raster = ToRaster(v1Clip);
+	vec4 v2Raster = ToRaster(v2Clip);
 
-	//If <= 0, back facing triangle so continue
-	if (Determinant3X3(mat3(v0Clip.xyw, v1Clip.xyw, v2Clip.xyw)) >= 0.0f)
+	mat3 model =
 	{
-		triangleBuffer.data[gl_GlobalInvocationID.x].vertexData[0].pos = v0Clip;
-		triangleBuffer.data[gl_GlobalInvocationID.x].vertexData[0].norm = vertexBuffer.data[indexBuffer.data[indicesIndex]].norm;
+		{ v0Raster.x, v1Raster.x, v2Raster.x },
+		{ v0Raster.y, v1Raster.y, v2Raster.y },
+		{ v0Raster.w, v1Raster.w, v2Raster.w },
+	};
 
-		triangleBuffer.data[gl_GlobalInvocationID.x].vertexData[1].pos = v1Clip;
-		triangleBuffer.data[gl_GlobalInvocationID.x].vertexData[1].norm = vertexBuffer.data[indexBuffer.data[indicesIndex + 1]].norm;
+	//vec3 depthConst = model * vec3(1.0f);==
+	//float depth = (depthConst.x * samp.x) + (depthConst.y * samp.y) + depthConst.z;
+	model *= identity;
+	model = inverse(model);
 
-		triangleBuffer.data[gl_GlobalInvocationID.x].vertexData[2].pos = v2Clip;
-		triangleBuffer.data[gl_GlobalInvocationID.x].vertexData[2].norm = vertexBuffer.data[indexBuffer.data[indicesIndex + 2]].norm;
-	}
+	vec3 E0 = model[0] / (abs(model[0].x) + abs(model[0].y));
+	vec3 E1 = model[1] / (abs(model[1].x) + abs(model[1].y));
+	vec3 E2 = model[2] / (abs(model[2].x) + abs(model[2].y));
+
+	triangleBuffer.data[gl_GlobalInvocationID.x].vertexData[0].pos = vec4(E0, 1.0f);
+	triangleBuffer.data[gl_GlobalInvocationID.x].vertexData[0].norm = vertexBuffer.data[indexBuffer.data[indicesIndex]].norm;
+
+	triangleBuffer.data[gl_GlobalInvocationID.x].vertexData[1].pos = vec4(E1, 1.0f);
+	triangleBuffer.data[gl_GlobalInvocationID.x].vertexData[1].norm = vertexBuffer.data[indexBuffer.data[indicesIndex + 1]].norm;
+
+	triangleBuffer.data[gl_GlobalInvocationID.x].vertexData[2].pos = vec4(E2, 1.0f);
+	triangleBuffer.data[gl_GlobalInvocationID.x].vertexData[2].norm = vertexBuffer.data[indexBuffer.data[indicesIndex + 2]].norm;
+
+	triangleBuffer.data[gl_GlobalInvocationID.x].bInitialized = int(Determinant3X3(model) < 0.0f);
 }

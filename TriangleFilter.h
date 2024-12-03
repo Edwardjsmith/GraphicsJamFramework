@@ -12,13 +12,6 @@ struct TriangleFilterParameters
 	size_t TriangleDataSize = 0;
 };
 
-struct VertexInput
-{
-	glm::vec3   Pos;
-	glm::vec3   Normal;
-	glm::vec2	UV;
-};
-
 class TriangleFilter : public ComputeShader
 {
 public:

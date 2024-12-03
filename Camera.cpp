@@ -64,17 +64,24 @@ std::vector<uint32_t> GIndexData;
 std::vector<TriangleData> GVisibleTriangleData;
 #endif
 
+
 void Camera::Draw(SDL_Surface* const surface)
 {
+	auto triangleData = std::vector<TriangleData>((GIndexData.size() / 3));
+	size_t triangleSize = (sizeof(TriangleData) * (triangleData.size()));
+
 	TriangleFilter* const triangleFilter = dynamic_cast<TriangleFilter*>(m_ComputeShaders[0].get());
 
 	if (triangleFilter)
 	{
 		triangleFilter->Use();
-		triangleFilter->SetTriangleFilterParameters(TriangleFilterParameters{ GVertexData.data(), (sizeof(VertexInput) * GVertexData.size()), GIndexData.data(), (sizeof(int32_t) * GIndexData.size()), (sizeof(TriangleData) * 512)});
+		triangleFilter->SetTriangleFilterParameters(TriangleFilterParameters{ GVertexData.data(), (sizeof(VertexInput) * GVertexData.size()), GIndexData.data(), (sizeof(int32_t) * GIndexData.size()), triangleSize });
 		triangleFilter->SetMatrix("ProjectionViewModel", m_projection * m_view * m_ObjTransform);
 
-		triangleFilter->Dispatch((void*)m_TriangleData, (GIndexData.size()) / 3);
+		triangleFilter->Dispatch(triangleData.data(), GIndexData.size() / 3);
+
+		triangleData.erase(std::remove_if(triangleData.begin(), triangleData.end(),
+			[](TriangleData& tri) { return  tri.bInitialized == false; }), triangleData.end());
 	}
 
 	SoftwareRasterizer* const rasterizer = dynamic_cast<SoftwareRasterizer*>(m_ComputeShaders[1].get());
@@ -82,11 +89,11 @@ void Camera::Draw(SDL_Surface* const surface)
 	if (rasterizer)
 	{
 		rasterizer->Use();
-		rasterizer->SetSoftwareRasterizerParameters(SoftwareRasterizerParameters{ (void*)m_TriangleData, (sizeof(TriangleData) * 512), sizeof(m_pixels)});
+		rasterizer->SetSoftwareRasterizerParameters(SoftwareRasterizerParameters{ triangleData.data(), triangleSize, sizeof(m_pixels)});
 		rasterizer->SetInt("screenWidth", SCREEN_WIDTH);
-		rasterizer->SetInt("screenHeight", SCREEN_HEIGHT);
+	//	rasterizer->SetInt("screenHeight", SCREEN_HEIGHT);
 		
-		rasterizer->Dispatch(surface->pixels, SCREEN_WIDTH * SCREEN_HEIGHT);
+		rasterizer->Dispatch(surface->pixels, 0);
 	}
 }
 

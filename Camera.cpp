@@ -45,7 +45,7 @@ void Camera::Update(float delta)
 
 	m_forward = glm::normalize(m_direction);
 
-	m_projection = glm::perspective(glm::radians(45.0f), static_cast<float>(SCREEN_WIDTH / SCREEN_HEIGHT), 1.0f, 100.0f);
+	m_projection = glm::perspective(glm::radians(45.0f), static_cast<float>(SCREEN_WIDTH / SCREEN_HEIGHT), 10.0f, 100.0f);
 	m_view = glm::lookAt(m_position, m_position + m_forward, m_up);
 
 	m_ObjTransform = glm::rotate(m_ObjTransform, delta, glm::vec3(0.0f, 1.0f, 0.0f));
@@ -88,6 +88,8 @@ void Camera::Draw(SDL_Surface* const surface)
 
 	if (rasterizer)
 	{
+		triangleSize = (sizeof(TriangleData) * (triangleData.size()));
+
 		rasterizer->Use();
 		rasterizer->SetSoftwareRasterizerParameters(SoftwareRasterizerParameters{ triangleData.data(), triangleSize, sizeof(m_pixels)});
 		rasterizer->SetInt("screenWidth", SCREEN_WIDTH);

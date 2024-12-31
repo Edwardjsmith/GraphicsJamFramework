@@ -45,17 +45,10 @@ void main()
 		{ v0Raster.w, v1Raster.w, v2Raster.w },
 	};
 
-	triangleBuffer.data[gl_GlobalInvocationID.x].vertexData[0].pos = v0Raster;
-	triangleBuffer.data[gl_GlobalInvocationID.x].vertexData[0].norm = vertexBuffer.data[indexBuffer.data[indicesIndex]].norm;
-	triangleBuffer.data[gl_GlobalInvocationID.x].vertexData[0].UV = vertexBuffer.data[indexBuffer.data[indicesIndex]].UV;
+	triangleBuffer.data[gl_GlobalInvocationID.x].TriangleVertIndex[3] = 0;
 
-	triangleBuffer.data[gl_GlobalInvocationID.x].vertexData[1].pos = v1Raster;
-	triangleBuffer.data[gl_GlobalInvocationID.x].vertexData[1].norm = vertexBuffer.data[indexBuffer.data[indicesIndex + 1]].norm;
-	triangleBuffer.data[gl_GlobalInvocationID.x].vertexData[1].UV = vertexBuffer.data[indexBuffer.data[indicesIndex + 1]].UV;
-
-	triangleBuffer.data[gl_GlobalInvocationID.x].vertexData[2].pos = v2Raster;
-	triangleBuffer.data[gl_GlobalInvocationID.x].vertexData[2].norm = vertexBuffer.data[indexBuffer.data[indicesIndex + 2]].norm;
-	triangleBuffer.data[gl_GlobalInvocationID.x].vertexData[2].UV = vertexBuffer.data[indexBuffer.data[indicesIndex + 2]].UV;
-
-	triangleBuffer.data[gl_GlobalInvocationID.x].bInitialized = int(Determinant3X3(model) < 0.0f && !((ymin > wmax) || (xmin > wmax) || (xmax < wmin) || (ymax < wmin)));
+	triangleBuffer.data[gl_GlobalInvocationID.x].TriangleVertIndex[0] = indexBuffer.data[indicesIndex];
+	triangleBuffer.data[gl_GlobalInvocationID.x].TriangleVertIndex[1] = indexBuffer.data[indicesIndex + 1];
+	triangleBuffer.data[gl_GlobalInvocationID.x].TriangleVertIndex[2] = indexBuffer.data[indicesIndex + 2];
+	triangleBuffer.data[gl_GlobalInvocationID.x].TriangleVertIndex[3] = int(Determinant3X3(model) < 0.0f && !((ymin > wmax) || (xmin > wmax) || (xmax < wmin) || (ymax < wmin)));
 }

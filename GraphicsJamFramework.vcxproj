@@ -156,6 +156,7 @@
     <ClCompile Include="EngineLoop.cpp" />
     <ClCompile Include="glad.c" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="PixelShader.cpp" />
     <ClCompile Include="SoftwareRasterizer.cpp" />
     <ClCompile Include="TriangleFilter.cpp" />
   </ItemGroup>
@@ -164,10 +165,12 @@
     <ClInclude Include="ComputeShader.h" />
     <ClInclude Include="EngineLoop.h" />
     <ClInclude Include="Globals.h" />
+    <ClInclude Include="PixelShader.h" />
     <ClInclude Include="SoftwareRasterizer.h" />
     <ClInclude Include="TriangleFilter.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Shaders\PixelShader.shader" />
     <None Include="Shaders\Projection.shaderutil" />
     <None Include="Shaders\SoftwareRasterizer.shader" />
     <None Include="Shaders\ClusterFilter.shader" />

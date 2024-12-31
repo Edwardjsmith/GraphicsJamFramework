@@ -81,7 +81,7 @@ private:
 
 	std::vector<std::unique_ptr<ComputeShader>> m_ComputeShaders;
 
-	glm::mat4 m_ObjTransform = glm::mat4(1.0f);
+	glm::mat4 m_objTransform = glm::mat4(1.0f);
 
 
 };

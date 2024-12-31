@@ -1,4 +1,5 @@
 ﻿#include "Camera.h"
+#include "PixelShader.h"
 
 Camera::Camera(glm::vec3& position, glm::vec3& targetLoc, glm::vec3& worldUp, float speed, float pitch, float yaw)
 {
@@ -48,7 +49,7 @@ void Camera::Update(float delta)
 	m_projection = glm::perspective(glm::radians(45.0f), static_cast<float>(SCREEN_WIDTH / SCREEN_HEIGHT), 10.0f, 100.0f);
 	m_view = glm::lookAt(m_position, m_position + m_forward, m_up);
 
-	m_ObjTransform = glm::rotate(m_ObjTransform, delta, glm::vec3(0.0f, 1.0f, 0.0f));
+	m_objTransform = glm::rotate(m_objTransform, delta, glm::vec3(0.0f, 1.0f, 0.0f));
 }
 
 #if RAYTRACER 1
@@ -61,12 +62,13 @@ int GDispatchY = 0;
 
 std::vector<VertexInput> GVertexData;
 std::vector<uint32_t> GIndexData;
-std::vector<TriangleData> GVisibleTriangleData;
 #endif
 
 
 void Camera::Draw(SDL_Surface* const surface)
 {
+	//SDL_FillRect(surface, NULL, 0x000000);
+
 	auto triangleData = std::vector<TriangleData>((GIndexData.size() / 3));
 	size_t triangleSize = (sizeof(TriangleData) * (triangleData.size()));
 
@@ -76,26 +78,43 @@ void Camera::Draw(SDL_Surface* const surface)
 	{
 		triangleFilter->Use();
 		triangleFilter->SetTriangleFilterParameters(TriangleFilterParameters{ GVertexData.data(), (sizeof(VertexInput) * GVertexData.size()), GIndexData.data(), (sizeof(int32_t) * GIndexData.size()), triangleSize });
-		triangleFilter->SetMatrix("ProjectionViewModel", m_projection * m_view * m_ObjTransform);
-
-		triangleFilter->Dispatch(triangleData.data(), GIndexData.size() / 3);
-
-		triangleData.erase(std::remove_if(triangleData.begin(), triangleData.end(),
-			[](TriangleData& tri) { return  tri.bInitialized == false; }), triangleData.end());
+		triangleFilter->SetInt("screenWidth", SCREEN_WIDTH);
+		triangleFilter->SetInt("screenHeight", SCREEN_HEIGHT);
+		triangleFilter->SetMatrix("ProjectionViewModel", m_projection * m_view * m_objTransform);
+		triangleFilter->Dispatch(triangleData.data(), triangleData.size());
 	}
+
+	auto pixelData = std::vector<PixelData>(SCREEN_WIDTH * SCREEN_HEIGHT);
+	size_t pixelSize = (sizeof(PixelData) * pixelData.size());
 
 	SoftwareRasterizer* const rasterizer = dynamic_cast<SoftwareRasterizer*>(m_ComputeShaders[1].get());
 
 	if (rasterizer)
 	{
+		triangleData.erase(std::remove_if(triangleData.begin(), triangleData.end(),
+			[](TriangleData& tri) { return  tri.TriangleVertIndex[3] == 0; }), triangleData.end());
+
 		triangleSize = (sizeof(TriangleData) * (triangleData.size()));
 
 		rasterizer->Use();
-		rasterizer->SetSoftwareRasterizerParameters(SoftwareRasterizerParameters{ triangleData.data(), triangleSize, sizeof(m_pixels)});
+		rasterizer->SetSoftwareRasterizerParameters(SoftwareRasterizerParameters{ triangleData.data(), triangleSize,  GVertexData.data(), (sizeof(VertexInput) * GVertexData.size()), pixelSize});
 		rasterizer->SetInt("screenWidth", SCREEN_WIDTH);
-	//	rasterizer->SetInt("screenHeight", SCREEN_HEIGHT);
+		rasterizer->SetInt("screenHeight", SCREEN_HEIGHT);
+		rasterizer->SetMatrix("ProjectionViewModel", m_projection * m_view * m_objTransform);
 		
-		rasterizer->Dispatch(surface->pixels, 0);
+		rasterizer->Dispatch(pixelData.data(), triangleData.size());
+	}
+
+	PixelShader* const pixelShader = dynamic_cast<PixelShader*>(m_ComputeShaders[2].get());
+
+	if (pixelShader)
+	{
+		pixelShader->Use();
+		pixelShader->SetPixelShaderParameters(PixelShaderParameters{pixelData.data(), pixelSize, sizeof(m_pixels)});
+		pixelShader->SetInt("screenWidth", SCREEN_WIDTH);
+		//pixelShader->SetInt("screenHeight", SCREEN_HEIGHT);
+
+		pixelShader->Dispatch(surface->pixels, 0);
 	}
 }
 

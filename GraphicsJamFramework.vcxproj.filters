@@ -22,6 +22,9 @@
     <ClCompile Include="TriangleFilter.cpp">
       <Filter>Rasterizer\Shaders</Filter>
     </ClCompile>
+    <ClCompile Include="PixelShader.cpp">
+      <Filter>Rasterizer\Shaders</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="EngineLoop.h">
@@ -40,6 +43,9 @@
       <Filter>Core</Filter>
     </ClInclude>
     <ClInclude Include="TriangleFilter.h">
+      <Filter>Rasterizer\Shaders</Filter>
+    </ClInclude>
+    <ClInclude Include="PixelShader.h">
       <Filter>Rasterizer\Shaders</Filter>
     </ClInclude>
   </ItemGroup>
@@ -61,6 +67,9 @@
     </None>
     <None Include="Shaders\SoftwareRaytracer.shader">
       <Filter>Raytracer</Filter>
+    </None>
+    <None Include="Shaders\PixelShader.shader">
+      <Filter>Rasterizer\Shaders</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>

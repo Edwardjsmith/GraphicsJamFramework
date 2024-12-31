@@ -12,18 +12,31 @@ static std::string GShaderExt = ".shader";
 static std::string GShaderUtilExt = ".shaderutil";
 static std::string GShaderIncludeWildCard = "#include";
 
+#pragma pack(push, 1)
 struct VertexInput
 {
-	alignas(16) glm::vec4 Pos;
-	alignas(16) glm::vec4 Normal;
-	alignas(16) glm::vec2 UV;
+	glm::vec4 Pos = glm::vec4(0);
+	glm::vec4 Normal = glm::vec4(0);
+	glm::vec2 UV = glm::vec2(0);
+	GLbyte padding[8];
 };
 
 struct TriangleData
 {
-	VertexInput data[3];
-	bool bInitialized = false;
+	int32_t TriangleVertIndex[4]{ 0, 0, 0, 0};
+	//GLbyte padding1[4];
 };
+
+struct PixelData
+{
+	glm::vec4 Pos = glm::vec4(0);
+	glm::vec4 Normal = glm::vec4(0);
+	glm::vec2 UV = glm::vec2(0);
+	GLbyte padding0[8];
+	int bPainted = 0;
+	GLbyte padding1[4];
+};
+#pragma pack( pop )
 
 class ComputeShader
 {

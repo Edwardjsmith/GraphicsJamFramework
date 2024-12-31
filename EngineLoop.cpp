@@ -2,6 +2,7 @@
 
 #define TINYOBJLOADER_IMPLEMENTATION
 #include "tiny_obj_loader.h"
+#include "PixelShader.h"
 
 static const char* GAssetPath = "Assets/Teapot/teapot.obj";
 
@@ -25,14 +26,17 @@ static void APIENTRY OpenglCallbackFunction(
 
 std::string shaderSrc0;
 std::string shaderSrc1;
+std::string shaderSrc2;
 
 ProcessState EngineLoop::Init()
 {
 #if RAYTRACER 1
     shaderSrc = GShaderPath + "SoftwareRaytracer" + GShaderExt;
 #else
-    shaderSrc1 = GShaderPath + "SoftwareRasterizer" + GShaderExt;
+
     shaderSrc0 = GShaderPath + "TriangleFilter" + GShaderExt;
+    shaderSrc1 = GShaderPath + "SoftwareRasterizer" + GShaderExt;
+    shaderSrc2 = GShaderPath + "PixelShader" + GShaderExt;
 
     if (LoadAssets(GAssetPath) != ProcessState::OKAY)
     {
@@ -239,6 +243,11 @@ ProcessState EngineLoop::SDLInit()
     }
 
     if (m_Camera->CompileShader<SoftwareRasterizer>(shaderSrc1.c_str()) != ProcessState::OKAY)
+    {
+        return ProcessState::NOT_OKAY;
+    }
+
+    if (m_Camera->CompileShader<PixelShader>(shaderSrc2.c_str()) != ProcessState::OKAY)
     {
         return ProcessState::NOT_OKAY;
     }

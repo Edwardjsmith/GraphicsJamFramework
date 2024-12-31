@@ -6,6 +6,9 @@ struct SoftwareRasterizerParameters
 	void* TriangleData = nullptr;
 	size_t TriangleDataSize = 0;
 
+	void* VertexData = nullptr;
+	size_t VertexDataSize = 0;
+
 	size_t PixelsSize = 0;
 };
 
@@ -20,6 +23,7 @@ public:
 private:
 
 	GLuint m_TriangleRasterBuffer = 0;
+	GLuint m_VertexBuffer = 0;
 	GLuint m_PixelBuffer = 0;
 	GLuint m_DepthBuffer = 0;
 

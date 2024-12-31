@@ -19,8 +19,15 @@ struct VertexData
 
 struct TriangleData
 {
-	VertexData vertexData[3];
-	int bInitialized;
+	int TriangleVertIndex[4];
+};
+
+struct PixelData
+{
+	vec4 PixelPos;
+	vec4 PixelNormal;
+	vec2 PixelUV;
+	int bPainted;
 };
 
 mat3 identity =

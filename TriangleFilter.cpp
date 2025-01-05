@@ -14,7 +14,7 @@ void TriangleFilter::Dispatch(void* OutData, int dispatchCount)
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, m_TriangleFilterBuffer);
 
 	glDispatchCompute(dispatchCount, 1, 1);
-	glMemoryBarrier(GL_ALL_BARRIER_BITS);
+	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
 	glGetBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, m_ShaderParams.TriangleDataSize, (GLvoid*)OutData);
 

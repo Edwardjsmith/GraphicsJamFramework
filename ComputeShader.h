@@ -24,7 +24,6 @@ struct VertexInput
 struct TriangleData
 {
 	int32_t TriangleVertIndex[4]{ 0, 0, 0, 0};
-	//GLbyte padding1[4];
 };
 
 struct PixelData
@@ -33,8 +32,6 @@ struct PixelData
 	glm::vec4 Normal = glm::vec4(0);
 	glm::vec2 UV = glm::vec2(0);
 	GLbyte padding0[8];
-	int bPainted = 0;
-	GLbyte padding1[4];
 };
 #pragma pack( pop )
 

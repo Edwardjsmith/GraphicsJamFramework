@@ -22,13 +22,15 @@ layout(binding = 3) buffer depth
 	float data[];
 } depthBuffer;
 
-layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
+layout(local_size_x = 64, local_size_y = 1, local_size_z = 1) in;
 void main()
 {
+	uint invokeIndexX = (gl_WorkGroupID.x * gl_WorkGroupSize.x) + gl_LocalInvocationID.x;
+
 	//From NDC to clip
-	vec4 v0Clip = ProjectionViewModel * vec4(vertexBuffer.data[triangleBuffer.data[gl_GlobalInvocationID.x].TriangleVertIndex[0]].pos.xyz, 1.0f);
-	vec4 v1Clip = ProjectionViewModel * vec4(vertexBuffer.data[triangleBuffer.data[gl_GlobalInvocationID.x].TriangleVertIndex[1]].pos.xyz, 1.0f);
-	vec4 v2Clip = ProjectionViewModel * vec4(vertexBuffer.data[triangleBuffer.data[gl_GlobalInvocationID.x].TriangleVertIndex[2]].pos.xyz, 1.0f);
+	vec4 v0Clip = ProjectionViewModel * vec4(vertexBuffer.data[triangleBuffer.data[invokeIndexX].TriangleVertIndex[0]].pos.xyz, 1.0f);
+	vec4 v1Clip = ProjectionViewModel * vec4(vertexBuffer.data[triangleBuffer.data[invokeIndexX].TriangleVertIndex[1]].pos.xyz, 1.0f);
+	vec4 v2Clip = ProjectionViewModel * vec4(vertexBuffer.data[triangleBuffer.data[invokeIndexX].TriangleVertIndex[2]].pos.xyz, 1.0f);
 
 	vec4 v0Raster = ToRaster(v0Clip);
 	vec4 v1Raster = ToRaster(v1Clip);
@@ -60,23 +62,18 @@ void main()
 	{
 		for (uint indexY = ymin; indexY < ymax; ++indexY)
 		{
-			vec3 samp = vec3(indexX, indexY, 1.0f);
+			vec3 samp = vec3(indexX, indexY, 0.0f);
+
+			uint index = indexX + (indexY * screenWidth);
+
+			vec3 depthConst = model * vec3(1.0f);
+			float depth = (depthConst.x * samp.x) + (depthConst.y * samp.y) + depthConst.z;
 
 			if (PixelInsideTriangle(E0, E1, E2, samp))
 			{
-				uint index = indexX + (indexY * screenWidth);
-				depthBuffer.data[index] = 100000000000000.0f;
-
-				vec3 depthConst = model * vec3(1.0f);
-				float depth = (depthConst.x * samp.x) + (depthConst.y * samp.y) + depthConst.z;
-				
-				if (depth < depthBuffer.data[index])
-				{
-					depthBuffer.data[index] = depth;
-					pixelDataBuffer.data[index].PixelPos = vec4(samp.xy, depthBuffer.data[index], 1.0f);
-					pixelDataBuffer.data[index].PixelNormal = (vertexBuffer.data[triangleBuffer.data[gl_GlobalInvocationID.x].TriangleVertIndex[0]].norm + vertexBuffer.data[triangleBuffer.data[gl_GlobalInvocationID.x].TriangleVertIndex[1]].norm + vertexBuffer.data[triangleBuffer.data[gl_GlobalInvocationID.x].TriangleVertIndex[2]].norm) / 3;
-					pixelDataBuffer.data[index].bPainted = 1;
-				}
+				depthBuffer.data[index] = depth;
+				pixelDataBuffer.data[index].PixelPos = vec4(samp.xy, depthBuffer.data[index], 1.0f);
+				pixelDataBuffer.data[index].PixelNormal = (vertexBuffer.data[triangleBuffer.data[invokeIndexX].TriangleVertIndex[0]].norm + vertexBuffer.data[triangleBuffer.data[invokeIndexX].TriangleVertIndex[1]].norm + vertexBuffer.data[triangleBuffer.data[invokeIndexX].TriangleVertIndex[2]].norm) / 3;
 			}
 		}
 	}

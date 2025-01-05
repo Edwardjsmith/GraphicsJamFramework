@@ -81,7 +81,7 @@ void Camera::Draw(SDL_Surface* const surface)
 		triangleFilter->SetInt("screenWidth", SCREEN_WIDTH);
 		triangleFilter->SetInt("screenHeight", SCREEN_HEIGHT);
 		triangleFilter->SetMatrix("ProjectionViewModel", m_projection * m_view * m_objTransform);
-		triangleFilter->Dispatch(triangleData.data(), triangleData.size());
+		triangleFilter->Dispatch(triangleData.data(), triangleData.size() / 64);
 	}
 
 	auto pixelData = std::vector<PixelData>(SCREEN_WIDTH * SCREEN_HEIGHT);
@@ -102,7 +102,7 @@ void Camera::Draw(SDL_Surface* const surface)
 		rasterizer->SetInt("screenHeight", SCREEN_HEIGHT);
 		rasterizer->SetMatrix("ProjectionViewModel", m_projection * m_view * m_objTransform);
 		
-		rasterizer->Dispatch(pixelData.data(), triangleData.size());
+		rasterizer->Dispatch(pixelData.data(), triangleData.size() / 64);
 	}
 
 	PixelShader* const pixelShader = dynamic_cast<PixelShader*>(m_ComputeShaders[2].get());

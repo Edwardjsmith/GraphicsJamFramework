@@ -1,5 +1,0 @@
-﻿  Camera.cpp
-C:\Users\edwar\Documents\GitHub\GraphicsJamFramework\GraphicsJamFramework\Camera.cpp(55,15): warning C4067: unexpected tokens following preprocessor directive - expected a newline
-C:\Users\edwar\Documents\GitHub\GraphicsJamFramework\GraphicsJamFramework\Camera.cpp(84,66): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\edwar\Documents\GitHub\GraphicsJamFramework\GraphicsJamFramework\Camera.cpp(105,59): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-  GraphicsJamFramework.vcxproj -> C:\Users\edwar\Documents\GitHub\GraphicsJamFramework\x64\Debug\GraphicsJamFramework.exe

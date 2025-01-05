@@ -5,3 +5,4 @@
 *.pdb
 *.log
 *.obj
+/x64
